@@ -1,3 +1,0 @@
-Initial commit: Django e_futbol project
-
-Add Django project/app, templates/static, .gitignore and .env example for GitHub.
