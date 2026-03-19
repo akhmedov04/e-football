@@ -1,0 +1,7 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#128240; Yangiliklar</h2><a href="{% url 'core:admin_news_create' %}" class="btn btn-primary">&#10010; Yaratish</a></div>
+<div class="table-wrapper"><table><thead><tr><th>Sarlavha</th><th>Sana</th><th>Amallar</th></tr></thead><tbody>
+{% for a in news %}<tr><td><strong>{{ a.title }}</strong></td><td>{{ a.date }}</td><td><a href="{% url 'core:admin_news_edit' a.pk %}" class="btn btn-sm btn-secondary">&#9998;</a> <form method="post" action="{% url 'core:admin_news_delete' a.pk %}" style="display:inline" onsubmit="return confirm('O\'chirilsinmi?')">{% csrf_token %}<button class="btn btn-sm btn-danger">&#128465;</button></form></td></tr>
+{% empty %}<tr><td colspan="3" class="text-center" style="padding:2rem;color:var(--gray-400)">Yo'q</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

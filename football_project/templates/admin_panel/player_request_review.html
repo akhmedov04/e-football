@@ -1,0 +1,46 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>{{ title }}</h2><a href="{% url 'core:admin_player_requests' %}" class="btn btn-secondary">&#8592; Orqaga</a></div>
+
+<div style="background:var(--green-50);border:1px solid var(--green-200);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.5rem">
+    <strong>{{ pr.team.name }}</strong> jamoasiga &middot; Yuboruvchi: {{ pr.created_by.username }} &middot; {{ pr.created_at|date:"d.m.Y H:i" }}
+    {% if pr.status != 'pending' %}<br><span class="badge {% if pr.status == 'accepted' %}badge-green{% else %}badge-red{% endif %}">{{ pr.get_status_display }}</span>{% endif %}
+</div>
+
+{% if pr.photo %}
+<div style="margin-bottom:1.5rem;">
+    <p style="font-weight:700;margin-bottom:.5rem;">Yuborilgan rasm:</p>
+    <img src="{{ pr.photo.url }}" alt="Rasm" style="max-width:200px;border-radius:var(--radius-md);border:1px solid var(--gray-200);">
+</div>
+{% endif %}
+
+{% if pr.status == 'pending' %}
+<div class="admin-form-card">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+        <p style="color:var(--gray-500);margin-bottom:1rem">Ma'lumotlarni tekshiring. Xato bo'lsa to'g'irlab tasdiqlang yoki rad eting.</p>
+        {% for field in form %}
+        <div class="form-group">
+            <label>{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<small style="color:#dc2626">{{ field.errors.0 }}</small>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="flex gap-1" style="margin-top:1rem">
+            <button type="submit" name="action" value="approve" class="btn btn-primary">&#10004; Tasdiqlash</button>
+            <button type="submit" name="action" value="reject" class="btn btn-danger">&#10006; Rad etish</button>
+        </div>
+    </form>
+</div>
+{% else %}
+<div class="admin-form-card">
+    <p><strong>Ism:</strong> {{ pr.first_name }} {{ pr.last_name }}</p>
+    <p><strong>Tug'ilgan sana:</strong> {{ pr.birthday|date:"d.m.Y" }}</p>
+    <p><strong>Pozitsiya:</strong> {{ pr.get_position_display }}</p>
+    {% if pr.height %}<p><strong>Bo'yi:</strong> {{ pr.height }} sm</p>{% endif %}
+    {% if pr.weight %}<p><strong>Vazni:</strong> {{ pr.weight }} kg</p>{% endif %}
+    {% if pr.jersey_number %}<p><strong>Raqam:</strong> #{{ pr.jersey_number }}</p>{% endif %}
+    {% if pr.admin_note %}<p><strong>Izoh:</strong> {{ pr.admin_note }}</p>{% endif %}
+    {% if pr.player %}<p><strong>O'yinchi ID:</strong> {{ pr.player.player_id }}</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

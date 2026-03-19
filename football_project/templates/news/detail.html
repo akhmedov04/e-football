@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ article.title }} — Futbol.uz{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+    <a href="{% url 'core:news_list' %}" style="color:var(--primary);font-weight:600;display:inline-block;margin-bottom:1rem;">&#8592; Yangiliklarga qaytish</a>
+
+    <div class="article-content">
+        <div class="date">{{ article.date }}</div>
+        <h1>{{ article.title }}</h1>
+        <div class="text">{{ article.text|linebreaksbr }}</div>
+
+        {% if photos %}
+        <div class="article-photos">
+            {% for photo in photos %}
+            <img src="{{ photo.file.url }}" alt="{{ article.title }}">
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

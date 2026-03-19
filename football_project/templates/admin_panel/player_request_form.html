@@ -1,0 +1,8 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>{{ title }}</h2><a href="{% url 'core:admin_player_requests' %}" class="btn btn-secondary">&#8592; Orqaga</a></div>
+<div style="background:var(--green-50);border:1px solid var(--green-200);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.5rem">
+<strong>Diqqat:</strong> So'rov viloyat adminga yuboriladi. U tasdiqlasa — o'yinchi avtomatik qo'shiladi.</div>
+<div class="admin-form-card"><form method="post" enctype="multipart/form-data">{% csrf_token %}
+{% for field in form %}<div class="form-group"><label>{{ field.label }}</label>{{ field }}{% if field.errors %}<small style="color:#dc2626">{{ field.errors.0 }}</small>{% endif %}</div>{% endfor %}
+<button type="submit" class="btn btn-primary">&#128228; So'rov yuborish</button></form></div>{% endblock %}

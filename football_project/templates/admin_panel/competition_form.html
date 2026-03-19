@@ -1,0 +1,16 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>{{ title }}</h2><a href="{% url 'core:admin_competition_list' %}" class="btn btn-secondary">&#8592; Orqaga</a></div>
+<div class="admin-form-card"><form method="post">{% csrf_token %}
+{% for field in form %}
+<div class="form-group"><label>{{ field.label }}{% if field.name == 'teams' %} (tanlang){% endif %}</label>
+{% if field.name == 'teams' %}
+<input type="text" id="teamSearch" class="form-input" placeholder="&#128269; Qidirish..." style="margin-bottom:.75rem">
+<div style="max-height:300px;overflow-y:auto;border:1.5px solid var(--gray-200);border-radius:var(--radius-md);padding:.5rem" id="teamList">
+{% for cb in field %}<label style="display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border-radius:var(--radius-sm);cursor:pointer;font-weight:600;font-size:.9rem" data-name="{{ cb.choice_label|lower }}">{{ cb.tag }} {{ cb.choice_label }}</label>{% endfor %}
+</div>
+<script>document.getElementById('teamSearch').addEventListener('input',function(){var q=this.value.toLowerCase();document.querySelectorAll('#teamList label').forEach(function(l){l.style.display=l.getAttribute('data-name').includes(q)?'flex':'none'})});</script>
+{% else %}{{ field }}{% endif %}
+{% if field.errors %}<small style="color:#dc2626">{{ field.errors.0 }}</small>{% endif %}</div>
+{% endfor %}
+<button type="submit" class="btn btn-primary">&#10004; Saqlash</button></form></div>{% endblock %}

@@ -1,0 +1,10 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#128101; O'yinchilar</h2>
+{% if user_role == 'superuser' or user_role == 'region_admin' %}<a href="{% url 'core:admin_player_create' %}" class="btn btn-primary">&#10010; Qo'shish</a>{% endif %}
+{% if user_role == 'coach' %}<a href="{% url 'core:admin_player_request_create' %}" class="btn btn-primary">&#10010; O'yinchi so'rovi</a>{% endif %}
+</div>
+<div class="table-wrapper"><table><thead><tr><th>ID</th><th>Ism</th><th>Pozitsiya</th><th>Jamoa</th><th>Amallar</th></tr></thead><tbody>
+{% for p in players %}<tr><td><code>{{ p.player_id }}</code></td><td><strong>{{ p.last_name }} {{ p.first_name }}</strong></td><td><span class="badge badge-green">{{ p.get_position_display }}</span></td><td>{{ p.team.name }}</td><td>{% if user_role != 'coach' %}<a href="{% url 'core:admin_player_edit' p.pk %}" class="btn btn-sm btn-secondary">&#9998;</a> <form method="post" action="{% url 'core:admin_player_delete' p.pk %}" style="display:inline" onsubmit="return confirm('?')">{% csrf_token %}<button class="btn btn-sm btn-danger">&#128465;</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5" class="text-center" style="padding:2rem;color:var(--gray-400)">Yo'q</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

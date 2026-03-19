@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-title">Asosiy</div>
+        <a href="{% url 'core:admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">&#128200; Dashboard</a>
+
+        {% if user_role == 'superuser' %}
+        <div class="admin-sidebar-title">Kontent</div>
+        <a href="{% url 'core:admin_news_list' %}">&#128240; Yangiliklar</a>
+        {% endif %}
+
+        {% if user_role == 'superuser' or user_role == 'region_admin' %}
+        <div class="admin-sidebar-title">Boshqaruv</div>
+        <a href="{% url 'core:admin_team_list' %}">&#9917; Jamoalar</a>
+        <a href="{% url 'core:admin_player_list' %}">&#128101; O'yinchilar</a>
+        <a href="{% url 'core:admin_competition_list' %}">&#127942; Musobaqalar</a>
+        <a href="{% url 'core:admin_coaches' %}">&#128100; Murabbiylar</a>
+        <a href="{% url 'core:admin_stadiums' %}">&#127963; Stadionlar</a>
+        {% endif %}
+
+        {% if user_role == 'coach' %}
+        <div class="admin-sidebar-title">Mening jamoam</div>
+        <a href="{% url 'core:admin_team_list' %}">&#9917; Jamoa</a>
+        <a href="{% url 'core:admin_player_list' %}">&#128101; O'yinchilar</a>
+        {% endif %}
+
+        <div class="admin-sidebar-title">So'rovlar</div>
+        <a href="{% url 'core:admin_player_requests' %}">&#128203; O'yinchi so'rovlari
+            {% if pending_requests_count %}<span class="count alert">{{ pending_requests_count }}</span>{% endif %}
+        </a>
+        {% if user_role == 'coach' %}
+        <a href="{% url 'core:admin_transfers' %}">&#128259; Transferlar</a>
+        {% endif %}
+
+        {% if user_role == 'superuser' %}
+        <div class="admin-sidebar-title">Tizim</div>
+        <a href="{% url 'core:admin_region_admins' %}">&#128081; Viloyat adminlari</a>
+        <a href="{% url 'core:admin_regions' %}">&#127759; Viloyatlar</a>
+        <a href="{% url 'core:admin_cities' %}">&#127960; Shaharlar</a>
+        <a href="{% url 'core:admin_categories' %}">&#128218; Kategoriyalar</a>
+        {% endif %}
+    </aside>
+    <main class="admin-content">{% block admin_content %}{% endblock %}</main>
+</div>
+{% endblock %}

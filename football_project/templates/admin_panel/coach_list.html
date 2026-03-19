@@ -1,0 +1,7 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#128100; Murabbiylar</h2><a href="{% url 'core:admin_coach_create' %}" class="btn btn-primary">&#10010; Yaratish</a></div>
+<div class="table-wrapper"><table><thead><tr><th>Ism</th><th>Login</th><th>Jamoa</th><th>Amallar</th></tr></thead><tbody>
+{% for c in coaches %}<tr><td><strong>{{ c }}</strong></td><td>{{ c.user.username|default:"-" }}</td><td>{% if c.team %}{{ c.team.name }}{% else %}-{% endif %}</td><td><form method="post" action="{% url 'core:admin_coach_delete' c.pk %}" style="display:inline" onsubmit="return confirm('Coach va uning useri o\'chiriladi!')">{% csrf_token %}<button class="btn btn-sm btn-danger">&#128465;</button></form></td></tr>
+{% empty %}<tr><td colspan="4" class="text-center" style="padding:2rem;color:var(--gray-400)">Yo'q</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

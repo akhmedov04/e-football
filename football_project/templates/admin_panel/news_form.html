@@ -1,0 +1,7 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>{{ title }}</h2><a href="{% url 'core:admin_news_list' %}" class="btn btn-secondary">&#8592; Orqaga</a></div>
+<div class="admin-form-card"><form method="post" enctype="multipart/form-data">{% csrf_token %}
+{% for field in form %}<div class="form-group"><label>{{ field.label }}</label>{{ field }}{% if field.errors %}<small style="color:#dc2626">{{ field.errors.0 }}</small>{% endif %}</div>{% endfor %}
+<div class="form-group"><label>Rasmlar</label><input type="file" name="photos" class="form-input" multiple accept="image/*"></div>
+<button type="submit" class="btn btn-primary">&#10004; Saqlash</button></form></div>{% endblock %}

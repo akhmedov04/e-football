@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Yangiliklar — Futbol.uz{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+    <div class="page-header">
+        <h1>&#128240; Yangiliklar</h1>
+        <p>Eng so'nggi sport yangiliklari</p>
+    </div>
+
+    {% if news %}
+    <div class="news-grid">
+        {% for article in news %}
+        <a href="{% url 'core:news_detail' article.pk %}" class="news-card">
+            {% if article.get_first_photo %}
+            <div class="news-card-img" style="background-image:url('{{ article.get_first_photo }}')"></div>
+            {% else %}
+            <div class="news-card-img no-img">&#128240;</div>
+            {% endif %}
+            <div class="news-card-body">
+                <div class="date">{{ article.date }}</div>
+                <h3>{{ article.title }}</h3>
+                <p>{{ article.short_text|default:article.text|truncatewords:20 }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if news.has_other_pages %}
+    <div class="pagination">
+        {% if news.has_previous %}
+        <a href="?page={{ news.previous_page_number }}">&laquo; Oldingi</a>
+        {% endif %}
+        {% for num in news.paginator.page_range %}
+            {% if news.number == num %}
+            <span class="current">{{ num }}</span>
+            {% elif num > news.number|add:'-3' and num < news.number|add:'3' %}
+            <a href="?page={{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if news.has_next %}
+        <a href="?page={{ news.next_page_number }}">Keyingi &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">&#128240;</div>
+        <p>Hozircha yangiliklar yo'q</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

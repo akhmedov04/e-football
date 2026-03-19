@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Jamoalar — Futbol.uz{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+    <div class="page-header">
+        <h1>&#9917; Jamoalar</h1>
+        <p>Barcha ro'yxatga olingan jamoalar</p>
+    </div>
+
+    <!-- Filters -->
+    <form class="filter-bar" method="get">
+        <div class="form-group">
+            <label>Viloyat</label>
+            <select name="region" class="form-select" onchange="this.form.submit()">
+                <option value="">Barchasi</option>
+                {% for r in regions %}
+                <option value="{{ r.pk }}" {% if selected_region == r.pk|stringformat:"d" %}selected{% endif %}>{{ r.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Kategoriya</label>
+            <select name="category" class="form-select" onchange="this.form.submit()">
+                <option value="">Barchasi</option>
+                {% for c in categories %}
+                <option value="{{ c.pk }}" {% if selected_category == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Qidirish</label>
+            <input type="text" name="search" class="form-input" value="{{ search }}" placeholder="Jamoa nomi...">
+        </div>
+        <button type="submit" class="btn btn-primary">Filterlash</button>
+    </form>
+
+    {% if teams %}
+    <div class="card-grid">
+        {% for team in teams %}
+        <a href="{% url 'core:team_detail' team.pk %}" class="card">
+            <div class="card-img {% if team.logo %}has-photo{% endif %}">
+                {% if team.logo %}
+                <img src="{{ team.logo.url }}" alt="{{ team.name }}">
+                {% else %}
+                <span style="font-size:3rem;color:var(--green-300)">&#9917;</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h3>{{ team.name }}</h3>
+                <p>{{ team.city.name }} &middot; {{ team.category.name }}</p>
+                <div class="mt-1">
+                    <span class="badge badge-green">{{ team.players.count }} o'yinchi</span>
+                    {% if team.coach %}<span class="badge badge-gray">{{ team.coach }}</span>{% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if teams.has_other_pages %}
+    <div class="pagination">
+        {% if teams.has_previous %}<a href="?page={{ teams.previous_page_number }}&region={{ selected_region|default:'' }}&category={{ selected_category|default:'' }}&search={{ search }}">&laquo;</a>{% endif %}
+        {% for num in teams.paginator.page_range %}
+            {% if teams.number == num %}<span class="current">{{ num }}</span>
+            {% elif num > teams.number|add:'-3' and num < teams.number|add:'3' %}<a href="?page={{ num }}&region={{ selected_region|default:'' }}&category={{ selected_category|default:'' }}&search={{ search }}">{{ num }}</a>{% endif %}
+        {% endfor %}
+        {% if teams.has_next %}<a href="?page={{ teams.next_page_number }}&region={{ selected_region|default:'' }}&category={{ selected_category|default:'' }}&search={{ search }}">&raquo;</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">&#9917;</div>
+        <p>Jamoalar topilmadi</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}E-Futbol.uz — Bosh sahifa{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero-main{
+    background:linear-gradient(170deg,#edfcf2 0%,#d5f5e3 40%,#c3f0d5 70%,#edfcf2 100%);
+    padding:0;position:relative;overflow:hidden;
+}
+.hero-content{
+    max-width:1280px;margin:0 auto;padding:5rem 2rem 4.5rem;
+    display:flex;align-items:center;justify-content:space-between;gap:3rem;
+    position:relative;z-index:1;
+}
+.hero-left{max-width:600px}
+.hero-left h1{
+    font-family:'Space Grotesk',sans-serif;font-size:4.5rem;font-weight:900;
+    line-height:.95;letter-spacing:-3px;color:#0f172a;margin-bottom:.75rem;
+}
+.hero-left h1 .gr{
+    background:linear-gradient(135deg,#16a34a,#4ade80);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-left .sub{font-size:1.05rem;color:#6b7280;margin-bottom:2.25rem;line-height:1.6}
+.sbox{
+    display:flex;align-items:center;background:#fff;border-radius:60px;
+    padding:5px 5px 5px 22px;box-shadow:0 4px 24px rgba(0,0,0,.06);
+    border:2px solid rgba(34,197,94,.2);max-width:500px;transition:all .3s;
+}
+.sbox:focus-within{border-color:#4ade80;box-shadow:0 4px 24px rgba(34,197,94,.12)}
+.sbox .si{color:#9ca3af;font-size:1.15rem;flex-shrink:0}
+.sbox input{flex:1;border:0;outline:0;font-family:'Nunito',sans-serif;font-size:.95rem;color:#374151;padding:11px 12px;background:0 0;min-width:0}
+.sbox input::placeholder{color:#b0b8c4}
+.sbox button{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:0;padding:13px 26px;border-radius:60px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;letter-spacing:.5px;white-space:nowrap;transition:all .25s}
+.sbox button:hover{background:linear-gradient(135deg,#15803d,#16a34a);transform:translateY(-1px);box-shadow:0 6px 16px rgba(22,163,74,.25)}
+
+/* Abstract decoration instead of ball */
+.hero-art{flex-shrink:0;width:380px;height:380px;position:relative}
+.ha-circle{position:absolute;border-radius:50%;opacity:.15}
+.ha-c1{width:300px;height:300px;background:#16a34a;top:20px;left:40px}
+.ha-c2{width:180px;height:180px;background:#4ade80;top:0;right:0}
+.ha-c3{width:120px;height:120px;background:#22c55e;bottom:20px;left:20px}
+.ha-icon{position:absolute;font-size:6rem;top:50%;left:50%;transform:translate(-50%,-50%);filter:drop-shadow(0 8px 20px rgba(0,0,0,.08))}
+.ha-stat{
+    position:absolute;background:#fff;border-radius:14px;padding:.75rem 1.1rem;
+    box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid #e5e7eb;
+    font-family:'Space Grotesk',sans-serif;
+}
+.ha-stat .hn{font-size:1.3rem;font-weight:800;color:#16a34a}
+.ha-stat .hl{font-size:.65rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.ha-s1{top:30px;right:10px;animation:float1 4s ease-in-out infinite}
+.ha-s2{bottom:50px;left:0;animation:float2 5s ease-in-out infinite}
+.ha-s3{bottom:30px;right:30px;animation:float1 6s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+@media(max-width:900px){
+    .hero-content{flex-direction:column;text-align:center;padding:3rem 1.5rem 2.5rem}
+    .hero-left .sub{margin:0 auto 2rem}
+    .sbox{max-width:100%;margin:0 auto}
+    .hero-art{width:280px;height:280px}
+}
+@media(max-width:480px){.hero-left h1{font-size:2.8rem;letter-spacing:-1.5px}.hero-art{width:220px;height:220px}}
+
+.stats-bar{background:#fff;border-top:1px solid #f1f5f0;border-bottom:1px solid #f1f5f0;padding:1.75rem 2rem}
+.stats-bar-inner{max-width:1280px;margin:0 auto;display:flex;justify-content:center;gap:4rem;flex-wrap:wrap}
+.sbi{text-align:center}
+.sbi .n{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:800;color:#16a34a}
+.sbi .l{font-size:.75rem;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.idx-section{padding:3rem 0}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-main">
+    <div class="hero-content">
+        <div class="hero-left">
+            <h1>FOOTBALL<br><span class="gr">IS THE BASE</span></h1>
+            <p class="sub">O'yinchilarni qidiring, jamoalarni kuzating va musobaqalar natijalarini bilib boring</p>
+            <form class="sbox" action="{% url 'core:search_player' %}" method="get">
+                <span class="si">&#128269;</span>
+                <input type="text" name="q" placeholder="O'yinchi ID yoki ismini kiriting...">
+                <button type="submit">QIDIRISH</button>
+            </form>
+        </div>
+        <div class="hero-art">
+            <div class="ha-circle ha-c1"></div>
+            <div class="ha-circle ha-c2"></div>
+            <div class="ha-circle ha-c3"></div>
+            <div class="ha-icon">&#9917;</div>
+            <div class="ha-stat ha-s1">
+                <div class="hn">{{ total_teams|default:"0" }}</div>
+                <div class="hl">Jamoalar</div>
+            </div>
+            <div class="ha-stat ha-s2">
+                <div class="hn">{{ total_players|default:"0" }}</div>
+                <div class="hl">O'yinchilar</div>
+            </div>
+            <div class="ha-stat ha-s3">
+                <div class="hn">{{ total_competitions|default:"0" }}</div>
+                <div class="hl">Musobaqalar</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-bar">
+    <div class="stats-bar-inner">
+        <div class="sbi"><div class="n">{{ total_teams|default:"0" }}</div><div class="l">Jamoalar</div></div>
+        <div class="sbi"><div class="n">{{ total_players|default:"0" }}</div><div class="l">O'yinchilar</div></div>
+        <div class="sbi"><div class="n">{{ total_competitions|default:"0" }}</div><div class="l">Musobaqalar</div></div>
+        <div class="sbi"><div class="n">{{ total_news|default:"0" }}</div><div class="l">Yangiliklar</div></div>
+    </div>
+</div>
+
+<div class="container">
+    {% if latest_news %}
+    <div class="idx-section">
+        <div class="section-title">
+            <span class="icon">&#128240;</span> Yangiliklar
+            <a href="{% url 'core:news_list' %}">Barchasini ko'rish &rarr;</a>
+        </div>
+        <div class="carousel-wrapper">
+            <div class="carousel-track" id="carouselTrack">
+                {% for article in latest_news %}
+                <div class="carousel-slide">
+                    <div class="carousel-card">
+                        {% if article.get_first_photo %}
+                        <div class="carousel-card-img" style="background-image:url('{{ article.get_first_photo }}')"></div>
+                        {% else %}
+                        <div class="carousel-card-img no-img">&#128240;</div>
+                        {% endif %}
+                        <div class="carousel-card-body">
+                            <div class="date">{{ article.date }}</div>
+                            <h3>{{ article.title }}</h3>
+                            <p>{{ article.short_text|default:article.text|truncatewords:25 }}</p>
+                            <a href="{% url 'core:news_detail' article.pk %}" class="btn-read">Batafsil &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="carousel-controls">
+                <button class="carousel-btn" onclick="moveCarousel(-1)">&#8592;</button>
+                <button class="carousel-btn" onclick="moveCarousel(1)">&#8594;</button>
+            </div>
+        </div>
+        <div class="carousel-dots" id="carouselDots">
+            {% for article in latest_news %}
+            <button class="carousel-dot {% if forloop.first %}active{% endif %}" onclick="goToSlide({{ forloop.counter0 }})"></button>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if latest_teams %}
+    <div class="idx-section">
+        <div class="section-title">
+            <span class="icon">&#9917;</span> Jamoalar
+            <a href="{% url 'core:team_list' %}">Barchasini ko'rish &rarr;</a>
+        </div>
+        <div class="card-grid">
+            {% for team in latest_teams %}
+            <a href="{% url 'core:team_detail' team.pk %}" class="card">
+                <div class="card-img {% if team.logo %}has-photo{% endif %}">
+                    {% if team.logo %}<img src="{{ team.logo.url }}" alt="{{ team.name }}">
+                    {% else %}<span style="font-size:3rem;color:var(--green-300)">&#9917;</span>{% endif %}
+                </div>
+                <div class="card-body">
+                    <h3>{{ team.name }}</h3>
+                    <p>{{ team.city }} &middot; {{ team.category }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if upcoming_competitions %}
+    <div class="idx-section">
+        <div class="section-title">
+            <span class="icon">&#127942;</span> Yaqinlashayotgan musobaqalar
+            <a href="{% url 'core:competition_list' %}">Barchasini ko'rish &rarr;</a>
+        </div>
+        <div class="comp-list">
+            {% for comp in upcoming_competitions %}
+            <a href="{% url 'core:competition_detail' comp.pk %}" class="comp-card">
+                <div class="comp-card-info">
+                    <h3>{{ comp.name }}</h3>
+                    <p><span class="badge badge-green">{{ comp.get_type_display }}</span> &nbsp;{{ comp.category }} &middot; {{ comp.teams.count }} ta jamoa</p>
+                </div>
+                <div class="comp-card-date">{{ comp.date }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cs=0;const t=document.getElementById('carouselTrack'),ds=document.querySelectorAll('.carousel-dot'),ts=ds.length||1;let ai;
+function goToSlide(n){cs=n;if(cs>=ts)cs=0;if(cs<0)cs=ts-1;if(t)t.style.transform=`translateX(-${cs*100}%)`;ds.forEach((d,i)=>d.classList.toggle('active',i===cs))}
+function moveCarousel(d){goToSlide(cs+d);clearInterval(ai);ai=setInterval(()=>goToSlide(cs+1),5000)}
+if(ts>1)ai=setInterval(()=>goToSlide(cs+1),5000);
+</script>
+{% endblock %}

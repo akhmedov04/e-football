@@ -1,0 +1,7 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#9917; Jamoalar</h2>{% if user_role == 'superuser' or user_role == 'region_admin' %}<a href="{% url 'core:admin_team_create' %}" class="btn btn-primary">&#10010; Yaratish</a>{% endif %}</div>
+<div class="table-wrapper"><table><thead><tr><th>Nomi</th><th>Shahar</th><th>Kategoriya</th><th>Murabbiy</th><th>Amallar</th></tr></thead><tbody>
+{% for t in teams %}<tr><td><strong>{{ t.name }}</strong></td><td>{{ t.city }}</td><td>{{ t.category }}</td><td>{{ t.coach|default:"-" }}</td><td>{% if user_role == 'superuser' or user_role == 'region_admin' %}<a href="{% url 'core:admin_team_edit' t.pk %}" class="btn btn-sm btn-secondary">&#9998;</a>{% endif %} {% if user_role == 'superuser' %}<form method="post" action="{% url 'core:admin_team_delete' t.pk %}" style="display:inline" onsubmit="return confirm('?')">{% csrf_token %}<button class="btn btn-sm btn-danger">&#128465;</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5" class="text-center" style="padding:2rem;color:var(--gray-400)">Yo'q</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

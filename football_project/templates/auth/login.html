@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirish — Futbol.uz</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="logo">
+            <svg width="48" height="48" viewBox="0 0 36 36" fill="none">
+                <circle cx="18" cy="18" r="17" fill="#16a34a" stroke="#15803d" stroke-width="2"/>
+                <path d="M18 6L20.5 14H28L22 18.5L24 27L18 22L12 27L14 18.5L8 14H15.5L18 6Z" fill="white" opacity="0.9"/>
+            </svg>
+        </div>
+        <h1>Tizimga kirish</h1>
+        <p>Admin yoki murabbiy sifatida kiring</p>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="message message-{{ message.tags }}" style="position:static;max-width:100%;margin-bottom:1rem">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Foydalanuvchi nomi</label>
+                {{ form.username }}
+            </div>
+            <div class="form-group">
+                <label>Parol</label>
+                {{ form.password }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top:.5rem;">Kirish</button>
+        </form>
+
+        <div class="text-center mt-2">
+            <a href="{% url 'core:index' %}" style="color:var(--primary);font-weight:600;">&#8592; Bosh sahifaga qaytish</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

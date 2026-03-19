@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load core_tags %}
+
+{% block title %}{{ comp.name }} — Futbol.uz{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+    <a href="{% url 'core:competition_list' %}" style="color:var(--primary);font-weight:600;display:inline-block;margin-bottom:1rem;">&#8592; Musobaqalarga qaytish</a>
+
+    <div class="comp-header">
+        <h1>{{ comp.name }}</h1>
+        <div class="meta">{{ comp.date }} {% if comp.stadium %}&middot; {{ comp.stadium }}{% endif %}</div>
+        <div class="comp-badges">
+            <span class="badge {% if comp.is_finished %}badge-gray{% else %}badge-green{% endif %}">
+                {% if comp.is_finished %}Yakunlangan{% else %}Faol{% endif %}
+            </span>
+            <span class="badge badge-blue">{{ comp.get_type_display }}</span>
+            <span class="badge badge-gray">{{ comp.category }}</span>
+        </div>
+    </div>
+
+    <!-- ROUND ROBIN STANDINGS -->
+    {% if standings %}
+    <div class="section" style="padding-top:0">
+        <div class="section-title">
+            <span class="icon">&#128202;</span>
+            Turnir jadvali
+        </div>
+        <div class="table-wrapper">
+            <table class="standings-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th style="text-align:left">Jamoa</th>
+                        <th>O'yin</th>
+                        <th>G'alaba</th>
+                        <th>Durrang</th>
+                        <th>Mag'lubiyat</th>
+                        <th>GF</th>
+                        <th>GA</th>
+                        <th>GD</th>
+                        <th>Ochko</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in standings %}
+                    <tr>
+                        <td class="rank">{{ forloop.counter }}</td>
+                        <td class="team-name" style="text-align:left">{{ row.team.name }}</td>
+                        <td class="table-center">{{ row.played }}</td>
+                        <td class="table-center">{{ row.won }}</td>
+                        <td class="table-center">{{ row.drawn }}</td>
+                        <td class="table-center">{{ row.lost }}</td>
+                        <td class="table-center">{{ row.goals_for }}</td>
+                        <td class="table-center">{{ row.goals_against }}</td>
+                        <td class="table-center">{{ row.goal_diff }}</td>
+                        <td class="table-center points">{{ row.points }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- OLYMPIC BRACKET -->
+    {% if olympic_rounds %}
+    <div class="section" style="padding-top:0">
+        <div class="section-title">
+            <span class="icon">&#127942;</span>
+            Olimpik tizim diagrammasi
+        </div>
+        <div class="bracket">
+            {% for round_num, round_matches in olympic_rounds.items %}
+            <div class="bracket-round">
+                <div class="bracket-round-title">
+                    {% if round_matches|length == 1 %}
+                        Final
+                    {% elif round_matches|length == 2 %}
+                        Yarim final
+                    {% else %}
+                        {{ round_num }}-raund
+                    {% endif %}
+                </div>
+                {% for match in round_matches %}
+                {% if match.is_bye %}
+                <div class="bracket-match" style="opacity:.6">
+                    <div class="bracket-team winner">
+                        <span>{{ match.team_home.name }} (BYE)</span>
+                        <span class="score">&#10004;</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bracket-match">
+                    <div class="bracket-team {% if match.is_finished and match.score_home > match.score_away %}winner{% endif %}">
+                        <span>{{ match.team_home.name }}</span>
+                        <span class="score">{% if match.is_finished %}{{ match.score_home }}{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="bracket-team {% if match.is_finished and match.score_away > match.score_home %}winner{% endif %}">
+                        <span>{{ match.team_away.name }}</span>
+                        <span class="score">{% if match.is_finished %}{{ match.score_away }}{% else %}-{% endif %}</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ALL MATCHES -->
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">&#9917;</span>
+            O'yinlar
+        </div>
+
+        {% if matches %}
+        <div class="match-list">
+            {% for match in matches %}
+            {% if match.is_bye %}
+            <div class="match-item" style="opacity:.5">
+                <div class="match-team home"><span>{{ match.team_home.name }}</span></div>
+                <div class="match-score pending">BYE</div>
+                <div class="match-team away"><span>Avtomatik o'tish</span></div>
+            </div>
+            {% else %}
+            <div class="match-item">
+                <div class="match-team home">
+                    <span>{{ match.team_home.name }}</span>
+                    <div class="match-team-logo">
+                        {% if match.team_home.logo %}<img src="{{ match.team_home.logo.url }}" alt="">{% else %}&#9917;{% endif %}
+                    </div>
+                </div>
+                <div class="match-score {% if not match.is_finished %}pending{% endif %}">
+                    {% if match.is_finished %}
+                    {{ match.score_home }} <span class="sep">:</span> {{ match.score_away }}
+                    {% else %}vs{% endif %}
+                </div>
+                <div class="match-team away">
+                    <div class="match-team-logo">
+                        {% if match.team_away.logo %}<img src="{{ match.team_away.logo.url }}" alt="">{% else %}&#9917;{% endif %}
+                    </div>
+                    <span>{{ match.team_away.name }}</span>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Qur'a hali tashlanmagan</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

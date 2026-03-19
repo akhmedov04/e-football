@@ -1,0 +1,10 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#128259; Transferlar</h2>{% if coach_team %}<a href="{% url 'core:admin_transfer_create' %}" class="btn btn-primary">&#10010; Transfer</a>{% endif %}</div>
+{% if incoming %}
+<h3 style="font-weight:700;margin-bottom:1rem">Kiruvchi</h3>
+{% for t in incoming %}<div class="transfer-card"><div class="transfer-info"><h4>{{ t.player }}</h4><p>{{ t.from_team }} &#8594; {{ t.to_team }} &middot; <span class="badge {% if t.status == 'pending' %}badge-yellow{% elif t.status == 'accepted' %}badge-green{% else %}badge-red{% endif %}">{{ t.get_status_display }}</span></p>{% if t.message %}<p style="font-style:italic">"{{ t.message }}"</p>{% endif %}</div>
+{% if t.status == 'pending' %}<div class="transfer-actions"><form method="post" action="{% url 'core:admin_transfer_accept' t.pk %}">{% csrf_token %}<button class="btn btn-sm btn-primary">&#10004;</button></form><form method="post" action="{% url 'core:admin_transfer_reject' t.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">&#10006;</button></form></div>{% endif %}
+</div>{% endfor %}{% endif %}
+{% if outgoing %}<h3 style="font-weight:700;margin:2rem 0 1rem">Chiquvchi</h3>{% for t in outgoing %}<div class="transfer-card"><div class="transfer-info"><h4>{{ t.player }}</h4><p>{{ t.from_team }} &#8594; {{ t.to_team }} &middot; <span class="badge {% if t.status == 'pending' %}badge-yellow{% elif t.status == 'accepted' %}badge-green{% else %}badge-red{% endif %}">{{ t.get_status_display }}</span></p></div></div>{% endfor %}{% endif %}
+{% if not incoming and not outgoing %}<div class="empty-state"><div class="icon">&#128259;</div><p>Yo'q</p></div>{% endif %}{% endblock %}

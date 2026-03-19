@@ -1,0 +1,12 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#127942; Musobaqalar</h2><a href="{% url 'core:admin_competition_create' %}" class="btn btn-primary">&#10010; Yaratish</a></div>
+<div class="table-wrapper"><table><thead><tr><th>Nomi</th><th>Turi</th><th>Sana</th><th>Holat</th><th>Amallar</th></tr></thead><tbody>
+{% for c in competitions %}<tr><td><strong>{{ c.name }}</strong></td><td><span class="badge badge-blue">{{ c.get_type_display }}</span></td><td>{{ c.date }}</td>
+<td>{% if c.is_finished %}<span class="badge badge-gray">Yakunlangan</span>{% elif c.draw_done %}<span class="badge badge-green">Faol</span>{% else %}<span class="badge badge-yellow">Qur'a kutilmoqda</span>{% endif %}</td>
+<td>{% if not c.draw_done %}<form method="post" action="{% url 'core:admin_competition_draw' c.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-primary" onclick="return confirm('Qur\'a?')">&#127922; Qur'a</button></form>{% endif %}
+{% if c.draw_done %}<a href="{% url 'core:admin_competition_scores' c.pk %}" class="btn btn-sm btn-secondary">&#9998; Natijalar</a>{% endif %}
+{% if c.draw_done and not c.is_finished %}<form method="post" action="{% url 'core:admin_competition_finish' c.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-outline" onclick="return confirm('Yakunlansinmi?')">&#9989;</button></form>{% endif %}
+<a href="{% url 'core:admin_competition_edit' c.pk %}" class="btn btn-sm btn-secondary">&#9881;</a></td></tr>
+{% empty %}<tr><td colspan="5" class="text-center" style="padding:2rem;color:var(--gray-400)">Yo'q</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#128203; O'yinchi so'rovlari</h2>
+{% if role == 'coach' %}<a href="{% url 'core:admin_player_request_create' %}" class="btn btn-primary">&#10010; Yangi so'rov</a>{% endif %}
+</div>
+<div class="table-wrapper"><table><thead><tr><th>Ism</th><th>Jamoa</th><th>Pozitsiya</th><th>Holat</th><th>Sana</th><th>Amallar</th></tr></thead><tbody>
+{% for r in requests %}<tr>
+<td><strong>{{ r.last_name }} {{ r.first_name }}</strong></td><td>{{ r.team.name }}</td><td>{{ r.get_position_display }}</td>
+<td><span class="badge {% if r.status == 'pending' %}badge-yellow{% elif r.status == 'accepted' %}badge-green{% else %}badge-red{% endif %}">{{ r.get_status_display }}</span></td>
+<td>{{ r.created_at|date:"d.m.Y" }}</td>
+<td>{% if r.status == 'pending' and role != 'coach' %}<a href="{% url 'core:admin_player_request_review' r.pk %}" class="btn btn-sm btn-primary">&#128065; Ko'rish</a>{% endif %}
+{% if r.status == 'accepted' and r.player %}<code>ID: {{ r.player.player_id }}</code>{% endif %}
+{% if r.admin_note %}<br><small style="color:var(--gray-500)">{{ r.admin_note }}</small>{% endif %}</td>
+</tr>{% empty %}<tr><td colspan="6" class="text-center" style="padding:2rem;color:var(--gray-400)">So'rovlar yo'q</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}

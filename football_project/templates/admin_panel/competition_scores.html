@@ -1,0 +1,11 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#9998; {{ comp.name }} — Natijalar</h2>
+<div class="flex gap-1">{% if comp.type == 'olympic' and comp.draw_done and not comp.is_finished %}<form method="post" action="{% url 'core:admin_competition_next_round' comp.pk %}">{% csrf_token %}<button class="btn btn-outline" onclick="return confirm('Keyingi raund?')">&#8680; Keyingi raund</button></form>{% endif %}<a href="{% url 'core:admin_competition_list' %}" class="btn btn-secondary">&#8592; Orqaga</a></div></div>
+<form method="post">{% csrf_token %}<div class="table-wrapper"><table><thead><tr><th>Raund</th><th>Uy</th><th class="table-center">Hisob</th><th>Mehmon</th><th class="table-center">&#10004;</th></tr></thead><tbody>
+{% for m in matches %}<tr {% if m.is_bye %}style="opacity:.5"{% endif %}><td><span class="badge badge-blue">R{{ m.round_number }}</span></td><td><strong>{{ m.team_home.name }}</strong></td>
+<td class="table-center" style="white-space:nowrap">{% if m.is_bye %}BYE{% else %}<input type="number" name="score_home_{{ m.id }}" value="{{ m.score_home|default_if_none:'' }}" class="score-input" min="0"> : <input type="number" name="score_away_{{ m.id }}" value="{{ m.score_away|default_if_none:'' }}" class="score-input" min="0">{% endif %}</td>
+<td><strong>{% if m.is_bye %}—{% else %}{{ m.team_away.name }}{% endif %}</strong></td>
+<td class="table-center">{% if m.is_bye %}&#10004;{% else %}<input type="checkbox" name="finished_{{ m.id }}" value="1" {% if m.is_finished %}checked{% endif %}>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% if matches %}<div class="mt-2"><button type="submit" class="btn btn-primary">&#10004; Saqlash</button></div>{% endif %}</form>
+<div class="mt-3"><a href="{% url 'core:competition_detail' comp.pk %}" class="btn btn-outline" target="_blank">&#128065; Ko'rish</a></div>{% endblock %}

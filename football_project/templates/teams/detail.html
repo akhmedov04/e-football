@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ team.name }} — Futbol.uz{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+    <a href="{% url 'core:team_list' %}" style="color:var(--primary);font-weight:600;display:inline-block;margin-bottom:1rem;">&#8592; Jamoalarga qaytish</a>
+
+    <div class="team-header">
+        <div class="team-logo">
+            {% if team.logo %}
+            <img src="{{ team.logo.url }}" alt="{{ team.name }}">
+            {% else %}
+            <span class="placeholder">&#9917;</span>
+            {% endif %}
+        </div>
+        <div class="team-info">
+            <h1>{{ team.name }}</h1>
+            <div class="meta">
+                <span>&#128205; {{ team.city }}</span>
+                <span>&#127942; {{ team.category }}</span>
+                {% if team.coach %}<span>&#128100; Murabbiy: {{ team.coach }}</span>{% endif %}
+            </div>
+            {% if team.description %}
+            <p style="margin-top:.75rem;color:var(--gray-600);">{{ team.description }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:1.35rem;font-weight:700;margin-bottom:1.5rem;">O'yinchilar tarkibi</h2>
+
+    {% if players_by_position %}
+        {% for position, players in players_by_position.items %}
+        <div class="position-group">
+            <h3>{{ position }} ({{ players|length }})</h3>
+            <div class="player-grid">
+                {% for player in players %}
+                <a href="{% url 'core:search_player' %}?q={{ player.player_id }}" class="player-card" style="text-decoration:none;">
+                    <div class="player-avatar">
+                        {% if player.photo %}
+                        <img src="{{ player.photo.url }}" alt="{{ player }}">
+                        {% else %}
+                        {{ player.first_name.0 }}{{ player.last_name.0 }}
+                        {% endif %}
+                    </div>
+                    <div class="player-info">
+                        <div class="name">
+                            {% if player.jersey_number %}#{{ player.jersey_number }} {% endif %}
+                            {{ player.last_name }} {{ player.first_name }}
+                        </div>
+                        <div class="details">
+                            ID: {{ player.player_id }}
+                            {% if player.birthday %} &middot; {{ player.birthday }}{% endif %}
+                            {% if player.height %} &middot; {{ player.height }} sm{% endif %}
+                            {% if player.weight %} &middot; {{ player.weight }} kg{% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">&#128100;</div>
+        <p>O'yinchilar hali qo'shilmagan</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Qidiruv: {{ query }} — Futbol.uz{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+
+    <!-- Search bar -->
+    <div class="search-page-bar">
+        <form action="{% url 'core:search_player' %}" method="get" class="search-page-form">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" name="q" value="{{ query }}" placeholder="O'yinchi ID yoki ismini qidiring..." class="hero-search-input" autofocus>
+            <button type="submit" class="hero-search-btn">QIDIRISH</button>
+        </form>
+    </div>
+
+    {% if error %}
+    <div class="empty-state" style="margin-top:2rem;">
+        <div class="icon">&#128533;</div>
+        <p>{{ error }}</p>
+        <p style="color:var(--gray-400);margin-top:.5rem;">Boshqa ID yoki ism bilan qidiring</p>
+    </div>
+    {% endif %}
+
+    <!-- Exact player match -->
+    {% if player %}
+    <div class="player-profile-card">
+        <div class="player-profile-photo">
+            {% if player.photo %}
+            <img src="{{ player.photo.url }}" alt="{{ player }}">
+            {% else %}
+            <div class="player-profile-initials">{{ player.first_name.0 }}{{ player.last_name.0 }}</div>
+            {% endif %}
+        </div>
+        <div class="player-profile-info">
+            <div class="player-profile-id">ID: {{ player.player_id }}</div>
+            <h1>{{ player.first_name }} {{ player.last_name }}</h1>
+            {% if player.fathers_name %}<p class="fathersname">{{ player.fathers_name }}</p>{% endif %}
+
+            <div class="player-profile-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Jamoa</span>
+                    <span class="meta-value">{{ player.team.name }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Pozitsiya</span>
+                    <span class="meta-value">{{ player.get_position_display }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Tug'ilgan sana</span>
+                    <span class="meta-value">{{ player.birthday|date:"d.m.Y" }}</span>
+                </div>
+                {% if player.jersey_number %}
+                <div class="meta-item">
+                    <span class="meta-label">Raqam</span>
+                    <span class="meta-value">#{{ player.jersey_number }}</span>
+                </div>
+                {% endif %}
+                {% if player.height %}
+                <div class="meta-item">
+                    <span class="meta-label">Bo'yi</span>
+                    <span class="meta-value">{{ player.height }} sm</span>
+                </div>
+                {% endif %}
+                {% if player.weight %}
+                <div class="meta-item">
+                    <span class="meta-label">Vazni</span>
+                    <span class="meta-value">{{ player.weight }} kg</span>
+                </div>
+                {% endif %}
+                <div class="meta-item">
+                    <span class="meta-label">Viloyat</span>
+                    <span class="meta-value">{{ player.team.city }}</span>
+                </div>
+            </div>
+
+            <div class="player-profile-actions">
+                <a href="{% url 'core:player_id_card' player.pk %}" class="btn btn-primary btn-download">
+                    &#128196; ID Kartani yuklab olish (PDF)
+                </a>
+                <a href="{% url 'core:team_detail' player.team.pk %}" class="btn btn-outline">
+                    &#9917; Jamoani ko'rish
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Multiple results -->
+    {% if players %}
+    <h2 style="margin-top:1.5rem;margin-bottom:1rem;font-family:'Space Grotesk',sans-serif;">Qidiruv natijalari ({{ players|length }})</h2>
+    <div class="search-results-list">
+        {% for p in players %}
+        <a href="{% url 'core:search_player' %}?q={{ p.player_id }}" class="search-result-item">
+            <div class="search-result-avatar">
+                {% if p.photo %}
+                <img src="{{ p.photo.url }}" alt="">
+                {% else %}
+                {{ p.first_name.0 }}{{ p.last_name.0 }}
+                {% endif %}
+            </div>
+            <div class="search-result-info">
+                <strong>{{ p.last_name }} {{ p.first_name }}</strong>
+                <span class="badge badge-green">{{ p.get_position_display }}</span>
+                <p>{{ p.team.name }} &middot; ID: {{ p.player_id }}</p>
+            </div>
+            <span style="color:var(--primary);font-weight:700;">&#8594;</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not query %}
+    <div class="empty-state" style="margin-top:2rem;">
+        <div class="icon">&#128269;</div>
+        <p>O'yinchi ID raqamini kiriting</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

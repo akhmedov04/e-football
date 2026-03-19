@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Musobaqalar — Futbol.uz{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+    <div class="page-header">
+        <h1>&#127942; Musobaqalar</h1>
+    </div>
+
+    {% if upcoming %}
+    <div class="section" style="padding-top:0">
+        <div class="section-title">
+            <span class="icon">&#128197;</span>
+            Kelgusi musobaqalar
+        </div>
+        <div class="comp-list">
+            {% for comp in upcoming %}
+            <a href="{% url 'core:competition_detail' comp.pk %}" class="comp-card">
+                <div class="comp-card-info">
+                    <h3>{{ comp.name }}</h3>
+                    <p>
+                        <span class="badge badge-green">{{ comp.get_type_display }}</span>
+                        &nbsp; {{ comp.category }} &middot; {{ comp.teams.count }} jamoa
+                        {% if comp.stadium %}&middot; {{ comp.stadium }}{% endif %}
+                    </p>
+                </div>
+                <div class="comp-card-date">{{ comp.date }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if finished %}
+    <div class="section">
+        <div class="section-title">
+            <span class="icon">&#9989;</span>
+            Yakunlangan musobaqalar
+        </div>
+        <div class="comp-list">
+            {% for comp in finished %}
+            <a href="{% url 'core:competition_detail' comp.pk %}" class="comp-card">
+                <div class="comp-card-info">
+                    <h3>{{ comp.name }}</h3>
+                    <p>
+                        <span class="badge badge-gray">{{ comp.get_type_display }}</span>
+                        &nbsp; {{ comp.category }} &middot; {{ comp.teams.count }} jamoa
+                    </p>
+                </div>
+                <div class="comp-card-date">{{ comp.date }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not upcoming and not finished %}
+    <div class="empty-state">
+        <div class="icon">&#127942;</div>
+        <p>Hozircha musobaqalar yo'q</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

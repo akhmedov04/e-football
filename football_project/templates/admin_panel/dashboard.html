@@ -1,0 +1,33 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Panel{% endblock %}
+{% block admin_content %}
+<h2 style="font-family:'Space Grotesk',sans-serif;margin-bottom:1.5rem">&#128200; Dashboard
+    {% if role == 'region_admin' %}<span class="badge badge-blue">{{ region.name }} admini</span>{% endif %}
+    {% if role == 'coach' %}<span class="badge badge-green">Murabbiy</span>{% endif %}
+    {% if role == 'superuser' %}<span class="badge badge-green">Sayt admini</span>{% endif %}
+</h2>
+{% if coach_team %}<div style="background:var(--green-50);border:1px solid var(--green-200);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.5rem"><strong>Jamoa: {{ coach_team.name }}</strong></div>{% endif %}
+<div class="stats-grid">
+    <div class="stat-card"><div class="number">{{ total_teams|default:"—" }}</div><div class="label">Jamoalar</div></div>
+    <div class="stat-card"><div class="number">{{ total_players|default:"—" }}</div><div class="label">O'yinchilar</div></div>
+    {% if role != 'coach' %}<div class="stat-card"><div class="number">{{ total_competitions|default:"—" }}</div><div class="label">Musobaqalar</div></div>{% endif %}
+    <div class="stat-card"><div class="number">{{ pending_requests|default:"0" }}</div><div class="label">Kutilayotgan so'rovlar</div></div>
+</div>
+<h3 style="font-weight:700;margin:1.5rem 0 1rem">Tez havolalar</h3>
+<div class="flex flex-wrap gap-1">
+    {% if role == 'coach' %}
+    <a href="{% url 'core:admin_player_request_create' %}" class="btn btn-primary">&#10010; O'yinchi so'rovi</a>
+    <a href="{% url 'core:admin_transfer_create' %}" class="btn btn-outline">&#128259; Transfer</a>
+    {% endif %}
+    {% if role == 'superuser' or role == 'region_admin' %}
+    <a href="{% url 'core:admin_team_create' %}" class="btn btn-outline">&#10010; Jamoa</a>
+    <a href="{% url 'core:admin_competition_create' %}" class="btn btn-outline">&#10010; Musobaqa</a>
+    <a href="{% url 'core:admin_coach_create' %}" class="btn btn-outline">&#10010; Murabbiy</a>
+    <a href="{% url 'core:admin_player_requests' %}" class="btn btn-primary">&#128203; So'rovlar ({{ pending_requests|default:"0" }})</a>
+    {% endif %}
+    {% if role == 'superuser' %}
+    <a href="{% url 'core:admin_news_create' %}" class="btn btn-outline">&#10010; Yangilik</a>
+    <a href="{% url 'core:admin_region_admin_create' %}" class="btn btn-outline">&#128081; Viloyat admin</a>
+    {% endif %}
+</div>
+{% endblock %}

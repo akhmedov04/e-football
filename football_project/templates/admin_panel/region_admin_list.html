@@ -1,0 +1,7 @@
+{% extends 'admin_panel/base.html' %}
+{% block admin_content %}
+<div class="admin-list-header"><h2>&#128081; Viloyat adminlari</h2><a href="{% url 'core:admin_region_admin_create' %}" class="btn btn-primary">&#10010; Tayinlash</a></div>
+<div class="table-wrapper"><table><thead><tr><th>Ism</th><th>Viloyat</th><th>Login</th><th>Amallar</th></tr></thead><tbody>
+{% for ra in region_admins %}<tr><td><strong>{{ ra }}</strong></td><td><span class="badge badge-blue">{{ ra.region.name }}</span></td><td>{{ ra.user.username }}</td><td><form method="post" action="{% url 'core:admin_region_admin_delete' ra.pk %}" style="display:inline" onsubmit="return confirm('O\'chirilsinmi?')">{% csrf_token %}<button class="btn btn-sm btn-danger">&#128465;</button></form></td></tr>
+{% empty %}<tr><td colspan="4" class="text-center" style="padding:2rem;color:var(--gray-400)">Yo'q</td></tr>{% endfor %}
+</tbody></table></div>{% endblock %}
