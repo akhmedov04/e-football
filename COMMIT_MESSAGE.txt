@@ -1,0 +1,3 @@
+docs: add root README
+
+Add repository-level README so GitHub shows setup instructions.
