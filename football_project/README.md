@@ -1,47 +1,34 @@
-# ⚽ e_futbol (Django)
+# ⚽ e-football (Django) — ichki hujjat
 
-O'zbekiston futboli uchun demo veb-loyiha: public sahifalar + custom admin panel (`/panel/`) + Django admin (`/django-admin/`).
+Bu fayl loyihaning ichki hujjati. GitHub uchun asosiy README repo root’da: `README.md`.
 
-## 🚀 Ishga tushirish (Windows)
+## 🧩 Rollar
 
-```bash
-# 1) Virtual muhit (repo ichida .venv bo'lsa shuni ishlating)
-.\.venv\Scripts\activate
+- **Admin (superuser)**: hamma bo'limlarga to'liq ruxsat.
+- **Viloyat admin (RegionAdmin)**: o'z viloyati doirasidagi jamoa/stadion/musobaqa va player requestlarni boshqaradi.
+- **Coach**: o'z jamoasi o'yinchilari, player request, transferlar.
 
-# 2) Kutubxonalar
-python -m pip install -r .\football_project\requirements.txt
+## 🔁 Asosiy oqimlar
 
-# 3) Env (ixtiyoriy, tavsiya qilinadi)
-copy .env.example .env
-set DJANGO_SECRET_KEY=change-me
-set DJANGO_DEBUG=1
-set DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+### Player request (coach → viloyat admin)
 
-# 4) DB
-cd .\football_project
-python manage.py migrate
+1. Coach `/panel/player-requests/create/` orqali o'yinchi so'rovi yuboradi.
+2. Viloyat admin so'rovni ko'rib chiqadi:
+   - **Approve** → `PlayerRequest.approve()` orqali `Player` yaratiladi, status `accepted`.
+   - **Reject** → status `rejected`, `admin_note` saqlanadi.
 
-# 5) Demo data (superuser + coachlar)
-python manage.py seed_data
+### Musobaqa
 
-# 6) Server
-python manage.py runserver 127.0.0.1:8000
-```
+- **`round_robin`**: barcha jamoalar o'zaro o'ynaydi; `Competition.get_standings()` jadvalni hisoblaydi.
+- **`olympic`**: `generate_draw()` juftlab match yaratadi; keyingi raund `admin_competition_next_round` orqali g'oliblardan tuziladi.
 
-## 🔗 Linklar
+### Transfer
 
-- Public: `http://127.0.0.1:8000/`
-- Panel: `http://127.0.0.1:8000/panel/`
-- Django admin: `http://127.0.0.1:8000/django-admin/`
+- Coach transfer so'rovi yuboradi → qabul qilinsa `TransferRequest.accept()` o'yinchining `team`ini yangilaydi.
 
-## 👤 Demo login
+## 🧪 Demo data (`seed_data`)
 
-| Rol | Username | Parol |
-|-----|----------|-------|
-| Admin | `admin` | `admin123` |
-| Coach | `coach1`...`coach8` | `coach123` |
-
-## 📋 Funksiyalar (qisqa)
-
-- **Public**: yangiliklar, jamoalar (filter/pagination), musobaqalar (round-robin/olimpik), o'yinchi qidirish, ID-card PDF.
-- **Panel**: CRUD (news/teams/players/competitions), player request (coach → region admin), transferlar, region/city/category/stadium/coach boshqaruvi.
+`python manage.py seed_data` quyidagilarni yaratadi:
+- `admin / admin123`
+- `radmin1..radmin3 / radmin123`
+- `coach1..coach8 / coach123`

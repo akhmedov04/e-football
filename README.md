@@ -1,30 +1,30 @@
 # ⚽ e-football (Django)
 
-O'zbekiston futboli uchun demo veb-loyiha: public sahifalar + custom admin panel (`/panel/`) + Django admin (`/django-admin/`).
+O'zbekiston futboli uchun demo veb-loyiha: **public sahifalar** + **custom panel** (`/panel/`) + **Django admin** (`/django-admin/`).
 
-## 🚀 Ishga tushirish (Windows)
+## 🚀 Ishga tushirish (Windows / PowerShell)
 
-```bash
-# 1) Virtual muhit (repo ichida .venv bo'lsa shuni ishlating)
-.\.venv\Scripts\activate
+Repo root papkada (`e_futbol`) quyidagilarni bajaring.
+
+```powershell
+# 1) Virtual muhit
+.\.venv\Scripts\Activate.ps1
 
 # 2) Kutubxonalar
 python -m pip install -r .\football_project\requirements.txt
 
 # 3) Env (ixtiyoriy, tavsiya qilinadi)
-copy .env.example .env
-set DJANGO_SECRET_KEY=change-me
-set DJANGO_DEBUG=1
-set DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+Copy-Item .env.example .env
+$env:DJANGO_SECRET_KEY = "change-me"
+$env:DJANGO_DEBUG = "1"
+$env:DJANGO_ALLOWED_HOSTS = "127.0.0.1,localhost"
 
-# 4) DB
+# 4) DB va demo data
 cd .\football_project
 python manage.py migrate
-
-# 5) Demo data (superuser + coachlar)
 python manage.py seed_data
 
-# 6) Server
+# 5) Server
 python manage.py runserver 127.0.0.1:8000
 ```
 
@@ -34,18 +34,26 @@ python manage.py runserver 127.0.0.1:8000
 - Panel: `http://127.0.0.1:8000/panel/`
 - Django admin: `http://127.0.0.1:8000/django-admin/`
 
-## 👤 Demo login
+## 👤 Demo login (seed_data’dan keyin)
 
-| Rol | Username | Parol |
-|-----|----------|-------|
-| Admin | `admin` | `admin123` |
-| Coach | `coach1`...`coach8` | `coach123` |
+| Rol | Username | Parol | Izoh |
+|-----|----------|-------|------|
+| Admin | `admin` | `admin123` | To'liq boshqaruv |
+| Viloyat admin | `radmin1..radmin3` | `radmin123` | Region bo'yicha cheklangan boshqaruv |
+| Coach | `coach1..coach8` | `coach123` | O'z jamoasi: so'rov/transferlar |
 
 ## 📋 Funksiyalar (qisqa)
 
 - **Public**: yangiliklar, jamoalar (filter/pagination), musobaqalar (round-robin/olimpik), o'yinchi qidirish, ID-card PDF.
-- **Panel**: CRUD (news/teams/players/competitions), player request (coach → region admin), transferlar, region/city/category/stadium/coach boshqaruvi.
+- **Panel**: CRUD (news/teams/players/competitions), **player request** (coach → viloyat admin), transferlar, region/city/category/stadium/coach boshqaruvi.
+
+## 📁 Struktura
+
+- `football_project/` — Django project (manage.py shu yerda)
+- `football_project/core/` — asosiy app (models/views/forms)
+- `football_project/templates/` — sahifalar
+- `football_project/static/` — CSS
 
 ---
 
-Ichki loyiha hujjati: `football_project/README.md`
+Batafsil: `football_project/README.md`
