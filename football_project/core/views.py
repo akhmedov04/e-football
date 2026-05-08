@@ -316,7 +316,7 @@ def admin_competition_scores(request,pk):
             if sh is not None and sa is not None:
                 sh = (sh or '').strip()
                 sa = (sa or '').strip()
-                is_finished = fin == 'on'
+                is_finished = fin is not None
                 try:
                     if sh == '' and sa == '':
                         m.score_home = None
