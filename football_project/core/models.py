@@ -329,6 +329,7 @@ class Match(models.Model):
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="matches")
     team_home = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="home_matches")
     team_away = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="away_matches")
+    winner = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name="won_matches_manual")
     score_home = models.PositiveIntegerField(null=True, blank=True)
     score_away = models.PositiveIntegerField(null=True, blank=True)
     round_number = models.PositiveIntegerField(default=1)
@@ -355,6 +356,8 @@ class Match(models.Model):
             return self.team_home
         elif (self.score_away or 0) > (self.score_home or 0):
             return self.team_away
+        if self.winner_id in (self.team_home_id, self.team_away_id):
+            return self.winner
         return None
 
 

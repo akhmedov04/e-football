@@ -92,11 +92,11 @@
                 </div>
                 {% else %}
                 <div class="bracket-match">
-                    <div class="bracket-team {% if match.is_finished and match.score_home > match.score_away %}winner{% endif %}">
+                    <div class="bracket-team {% if match.is_finished and match.get_winner == match.team_home %}winner{% endif %}">
                         <span>{{ match.team_home.name }}</span>
                         <span class="score">{% if match.is_finished %}{{ match.score_home }}{% else %}-{% endif %}</span>
                     </div>
-                    <div class="bracket-team {% if match.is_finished and match.score_away > match.score_home %}winner{% endif %}">
+                    <div class="bracket-team {% if match.is_finished and match.get_winner == match.team_away %}winner{% endif %}">
                         <span>{{ match.team_away.name }}</span>
                         <span class="score">{% if match.is_finished %}{{ match.score_away }}{% else %}-{% endif %}</span>
                     </div>
