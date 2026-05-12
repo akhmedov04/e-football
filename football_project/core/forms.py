@@ -117,12 +117,13 @@ class CompetitionForm(forms.ModelForm):
         }
 
     def __init__(self, *args, region=None, **kwargs):
-        """region berilsa — faqat shu viloyat stadionlari filtrlandi, jamoalar hammasi ko'rinadi."""
+        """region berilsa — faqat shu viloyat stadionlari va jamoalari filtrlandi."""
         super().__init__(*args, **kwargs)
         self.fields['stadium'].required = True
         self.fields['teams'].required = True
         if region:
             self.fields['stadium'].queryset = Stadium.objects.filter(city__region=region)
+            self.fields['teams'].queryset = Team.objects.filter(city__region=region)
 
     def clean_teams(self):
         teams = self.cleaned_data.get('teams')

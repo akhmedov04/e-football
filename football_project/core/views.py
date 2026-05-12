@@ -395,72 +395,145 @@ def admin_competition_create(request):
         if form.is_valid():comp=form.save(commit=False);comp.created_by=request.user;comp.save();form.save_m2m();messages.success(request,"Yaratildi!");return redirect('core:admin_competition_list')
     else:form=CompetitionForm(**kw)
     return render(request,'admin_panel/competition_form.html',{'form':form,'title':"Musobaqa yaratish"})
+def _check_comp_access(request, comp):
+    """Region admin uchun musobaqa ruxsatini tekshirish. None qaytarsa OK."""
+    role = get_user_role(request.user)
+    region = get_user_region(request.user)
+    if role == 'region_admin' and (not comp.stadium or comp.stadium.city.region != region):
+        messages.error(request, "Sizning viloyatingiz emas!")
+        return redirect('core:admin_competition_list')
+    return None
+
 @superuser_or_radmin
 def admin_competition_edit(request,pk):
     comp=get_object_or_404(Competition,pk=pk);role=get_user_role(request.user);region=get_user_region(request.user);kw={'region':region} if role=='region_admin' else {}
-    if role=='region_admin' and (not comp.stadium or comp.stadium.city.region!=region):messages.error(request,"Sizning viloyatingiz emas!");return redirect('core:admin_competition_list')
+    deny = _check_comp_access(request, comp)
+    if deny: return deny
+    if comp.is_finished:
+        messages.error(request, "Yakunlangan musobaqani tahrirlab bo'lmaydi.")
+        return redirect('core:admin_competition_list')
+    if comp.draw_done:
+        # Qur'a tashlangan bo'lsa, jamoalar ro'yxatini o'zgartirish xavfli — faqat ba'zi maydonlar
+        if request.method == 'POST':
+            form = CompetitionForm(request.POST, instance=comp, **kw)
+            if form.is_valid():
+                if set(form.cleaned_data['teams']) != set(comp.teams.all()):
+                    messages.error(request, "Qur'a tashlangandan keyin jamoalar ro'yxatini o'zgartirib bo'lmaydi. Avval qur'ani bekor qiling.")
+                else:
+                    form.save(); messages.success(request, "Yangilandi!"); return redirect('core:admin_competition_list')
+        else:
+            form = CompetitionForm(instance=comp, **kw)
+        return render(request,'admin_panel/competition_form.html',{'form':form,'comp':comp,'title':"Tahrirlash (qur'a tashlangan)"})
     if request.method=='POST':
         form=CompetitionForm(request.POST,instance=comp,**kw)
         if form.is_valid():form.save();messages.success(request,"Yangilandi!");return redirect('core:admin_competition_list')
     else:form=CompetitionForm(instance=comp,**kw)
     return render(request,'admin_panel/competition_form.html',{'form':form,'comp':comp,'title':"Tahrirlash"})
+
+@superuser_or_radmin
+def admin_competition_delete(request,pk):
+    comp = get_object_or_404(Competition, pk=pk)
+    deny = _check_comp_access(request, comp)
+    if deny: return deny
+    if request.method == 'POST':
+        comp.delete()
+        messages.success(request, "Musobaqa o'chirildi.")
+    return redirect('core:admin_competition_list')
+
 @superuser_or_radmin
 def admin_competition_draw(request,pk):
-    comp=get_object_or_404(Competition,pk=pk);role=get_user_role(request.user);region=get_user_region(request.user)
-    if role=='region_admin' and (not comp.stadium or comp.stadium.city.region!=region):messages.error(request,"Sizning viloyatingiz emas!");return redirect('core:admin_competition_list')
-    if request.method=='POST' and not comp.draw_done:comp.generate_draw();messages.success(request,"Qur'a tashlandi!")
+    comp=get_object_or_404(Competition,pk=pk)
+    deny = _check_comp_access(request, comp)
+    if deny: return deny
+    if comp.is_finished:
+        messages.error(request, "Yakunlangan musobaqaga qur'a tashlab bo'lmaydi.")
+        return redirect('core:admin_competition_list')
+    if request.method == 'POST' and not comp.draw_done:
+        if comp.teams.count() < 2:
+            messages.error(request, "Qur'a tashlash uchun kamida 2 ta jamoa kerak.")
+            return redirect('core:admin_competition_list')
+        comp.generate_draw()
+        messages.success(request, "Qur'a tashlandi!")
     return redirect('core:admin_competition_scores',pk=pk)
+
+@superuser_or_radmin
+def admin_competition_reset_draw(request,pk):
+    """Qur'ani bekor qilish (yakunlanmagan bo'lsa). Barcha matchlar o'chiriladi."""
+    comp = get_object_or_404(Competition, pk=pk)
+    deny = _check_comp_access(request, comp)
+    if deny: return deny
+    if request.method == 'POST':
+        if comp.is_finished:
+            messages.error(request, "Yakunlangan musobaqa qur'asini bekor qila olmaysiz.")
+        elif comp.reset_draw():
+            messages.success(request, "Qur'a bekor qilindi. Endi qaytadan tashlashingiz mumkin.")
+    return redirect('core:admin_competition_list')
+
 @superuser_or_radmin
 def admin_competition_scores(request,pk):
-    comp=get_object_or_404(Competition,pk=pk);role=get_user_role(request.user);region=get_user_region(request.user);matches=comp.matches.select_related('team_home','team_away').order_by('round_number')
-    if role=='region_admin' and (not comp.stadium or comp.stadium.city.region!=region):messages.error(request,"Sizning viloyatingiz emas!");return redirect('core:admin_competition_list')
+    comp=get_object_or_404(Competition,pk=pk);matches=comp.matches.select_related('team_home','team_away').order_by('round_number')
+    deny = _check_comp_access(request, comp)
+    if deny: return deny
+    if comp.is_finished:
+        messages.info(request, "Musobaqa yakunlangan — natijalarni faqat ko'rishingiz mumkin.")
+        return render(request,'admin_panel/competition_scores.html',{'comp':comp,'matches':matches,'readonly':True})
     if request.method=='POST':
+        errors = []
+        saved = 0
         for m in matches:
-            if m.is_bye:continue
-            sh,sa,fin,winner_id=request.POST.get(f'score_home_{m.id}'),request.POST.get(f'score_away_{m.id}'),request.POST.get(f'finished_{m.id}'),request.POST.get(f'winner_{m.id}')
-            if sh is not None and sa is not None:
-                sh = (sh or '').strip()
-                sa = (sa or '').strip()
-                is_finished = fin is not None
-                try:
-                    if sh == '' and sa == '':
-                        m.score_home = None
-                        m.score_away = None
-                        m.is_finished = False
-                        m.winner = None
-                    elif sh.isdigit() and sa.isdigit():
-                        m.score_home = int(sh)
-                        m.score_away = int(sa)
-                        m.is_finished = is_finished
-                        # Durang bo'lsa olimpikda admin qo'lda g'olib tanlaydi.
-                        if m.score_home == m.score_away and m.competition.type == 'olympic' and m.is_finished:
-                            if winner_id and winner_id.isdigit():
-                                winner_team_id = int(winner_id)
-                                if winner_team_id in (m.team_home_id, m.team_away_id):
-                                    m.winner_id = winner_team_id
-                                else:
-                                    m.winner = None
-                            else:
-                                m.winner = None
-                        else:
-                            m.winner = None
-                    else:
-                        continue
-                    m.save()
-                except Exception:
-                    continue
-        messages.success(request,"Saqlandi!");return redirect('core:admin_competition_scores',pk=pk)
+            if m.is_bye: continue
+            sh = (request.POST.get(f'score_home_{m.id}') or '').strip()
+            sa = (request.POST.get(f'score_away_{m.id}') or '').strip()
+            fin = request.POST.get(f'finished_{m.id}')
+            winner_id = request.POST.get(f'winner_{m.id}')
+            is_finished = fin is not None
+
+            if sh == '' and sa == '':
+                # Reset
+                m.score_home = None; m.score_away = None; m.is_finished = False; m.winner = None
+                m.save(); saved += 1
+                continue
+            if not (sh.isdigit() and sa.isdigit()):
+                errors.append(f"{m.team_home.name} vs {m.team_away.name}: ball noto'g'ri (har ikkisi raqam bo'lishi kerak).")
+                continue
+            m.score_home = int(sh); m.score_away = int(sa); m.is_finished = is_finished
+            # Durang olimpikda — qo'lda g'olib tanlash
+            if m.score_home == m.score_away and m.competition.type == 'olympic' and m.is_finished:
+                if winner_id and winner_id.isdigit() and int(winner_id) in (m.team_home_id, m.team_away_id):
+                    m.winner_id = int(winner_id)
+                else:
+                    m.winner = None
+                    errors.append(f"{m.team_home.name} vs {m.team_away.name}: durang — g'olib tanlanmagan.")
+            else:
+                m.winner = None
+            m.save(); saved += 1
+        if errors:
+            for e in errors[:5]:
+                messages.warning(request, e)
+        if saved:
+            messages.success(request, f"{saved} ta o'yin saqlandi.")
+        return redirect('core:admin_competition_scores',pk=pk)
     return render(request,'admin_panel/competition_scores.html',{'comp':comp,'matches':matches})
+
 @superuser_or_radmin
 def admin_competition_finish(request,pk):
-    comp=get_object_or_404(Competition,pk=pk);role=get_user_role(request.user);region=get_user_region(request.user)
-    if role=='region_admin' and (not comp.stadium or comp.stadium.city.region!=region):messages.error(request,"Sizning viloyatingiz emas!");return redirect('core:admin_competition_list')
-    if request.method=='POST':comp.is_finished=True;comp.save();messages.success(request,"Yakunlandi!")
+    comp=get_object_or_404(Competition,pk=pk)
+    deny = _check_comp_access(request, comp)
+    if deny: return deny
+    if request.method == 'POST':
+        # Faqat barcha o'yinlar yakunlangan bo'lsagina yakunlash
+        unfinished = comp.matches.filter(is_finished=False).count()
+        if unfinished:
+            messages.error(request, f"Hali {unfinished} ta o'yin yakunlanmagan. Avval natijalarni kiriting.")
+        else:
+            comp.is_finished = True; comp.save()
+            messages.success(request, "Musobaqa yakunlandi!")
     return redirect('core:admin_competition_list')
 @superuser_or_radmin
 def admin_competition_next_round(request,pk):
-    comp=get_object_or_404(Competition,pk=pk);role=get_user_role(request.user);region=get_user_region(request.user)
-    if role=='region_admin' and (not comp.stadium or comp.stadium.city.region!=region):messages.error(request,"Sizning viloyatingiz emas!");return redirect('core:admin_competition_list')
+    comp=get_object_or_404(Competition,pk=pk)
+    deny = _check_comp_access(request, comp)
+    if deny: return deny
     if comp.type!='olympic' or comp.is_finished:return redirect('core:admin_competition_scores',pk=pk)
     if request.method=='POST':
         rounds=comp.get_olympic_rounds()

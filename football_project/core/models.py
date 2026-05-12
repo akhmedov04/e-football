@@ -273,13 +273,32 @@ class Competition(models.Model):
         if self.draw_done:
             return
         team_list = list(self.teams.all())
+        if len(team_list) < 2:
+            return  # kamida 2 jamoa bo'lishi shart
         random.shuffle(team_list)
         self.matches.all().delete()
 
         if self.type == 'round_robin':
-            for i in range(len(team_list)):
-                for j in range(i + 1, len(team_list)):
-                    Match.objects.create(competition=self, team_home=team_list[i], team_away=team_list[j], round_number=1)
+            # Circle method — har bir matchday alohida `round_number`
+            n = len(team_list)
+            arr = list(team_list)
+            if n % 2 == 1:
+                arr.append(None)  # bo'sh joy (BYE placeholder)
+                n += 1
+            total_rounds = n - 1
+            half = n // 2
+            for r in range(total_rounds):
+                for i in range(half):
+                    a, b = arr[i], arr[n - 1 - i]
+                    if a is None or b is None:
+                        continue
+                    # Uy/mehmon alternativlash — adolatlilik uchun
+                    if (r + i) % 2 == 0:
+                        Match.objects.create(competition=self, team_home=a, team_away=b, round_number=r + 1)
+                    else:
+                        Match.objects.create(competition=self, team_home=b, team_away=a, round_number=r + 1)
+                # Rotatsiya — 1-element joyida qoladi
+                arr = [arr[0]] + [arr[-1]] + arr[1:-1]
         elif self.type == 'olympic':
             i = 0
             while i < len(team_list) - 1:
@@ -290,6 +309,15 @@ class Competition(models.Model):
                                      round_number=1, score_home=0, score_away=0, is_finished=True, is_bye=True)
         self.draw_done = True
         self.save()
+
+    def reset_draw(self):
+        """Qur'ani bekor qilish — yakunlanmagan bo'lsa matches o'chiriladi."""
+        if self.is_finished:
+            return False
+        self.matches.all().delete()
+        self.draw_done = False
+        self.save()
+        return True
 
     def get_standings(self):
         if self.type != 'round_robin':
