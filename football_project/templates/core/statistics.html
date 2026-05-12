@@ -1,13 +1,200 @@
 {% extends 'base.html' %}
 {% block title %}Statistika — Futbol.uz{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-page{padding:2.5rem 0 4rem}
+.stats-page .page-header h1{display:flex;align-items:center;gap:.6rem;font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:800;color:var(--gray-900)}
+.stats-page .page-header p{color:var(--gray-500);margin-top:.35rem;font-size:.95rem}
+
+.stat-mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:1rem;margin:1.5rem 0 2.5rem}
+.stat-mini{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-lg);padding:1.25rem;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:var(--transition)}
+.stat-mini:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--green-200)}
+.stat-mini .ic{position:absolute;top:.85rem;right:.85rem;font-size:1.4rem;opacity:.25}
+.stat-mini .n{font-family:'Space Grotesk',sans-serif;font-size:1.95rem;font-weight:800;color:var(--primary);line-height:1}
+.stat-mini .l{font-size:.75rem;color:var(--gray-500);font-weight:700;margin-top:.4rem;text-transform:uppercase;letter-spacing:.4px}
+
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:900px){.stats-row{grid-template-columns:1fr}}
+
+.stats-card{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--radius-lg);padding:1.5rem;box-shadow:var(--shadow-sm)}
+.stats-card h3{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;color:var(--gray-900);margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+.stats-card h3 .em{font-size:1.2rem}
+
+.bar-row{display:flex;align-items:center;gap:.85rem;margin-bottom:.85rem}
+.bar-row:last-child{margin-bottom:0}
+.bar-row .lbl{min-width:120px;font-size:.85rem;font-weight:700;color:var(--gray-700)}
+.bar-row .bar{flex:1;background:var(--gray-100);height:10px;border-radius:999px;overflow:hidden;position:relative}
+.bar-row .bar .fill{height:100%;background:linear-gradient(90deg,var(--green-500),var(--green-400));border-radius:999px;transition:width .6s ease}
+.bar-row .val{font-size:.8rem;font-weight:800;color:var(--gray-700);min-width:80px;text-align:right;font-family:'Space Grotesk',sans-serif}
+
+.pos-row .bar .fill.gk{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.pos-row .bar .fill.def{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.pos-row .bar .fill.mid{background:linear-gradient(90deg,#10b981,#34d399)}
+.pos-row .bar .fill.fwd{background:linear-gradient(90deg,#ef4444,#f87171)}
+
+.rank-list{display:flex;flex-direction:column;gap:.6rem}
+.rank-item{display:flex;align-items:center;gap:.85rem;padding:.7rem .85rem;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid transparent;transition:var(--transition)}
+.rank-item:hover{background:var(--green-50);border-color:var(--green-200)}
+.rank-item .rk{width:28px;height:28px;border-radius:50%;background:var(--gray-200);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;font-family:'Space Grotesk',sans-serif;flex-shrink:0}
+.rank-item:nth-child(1) .rk{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff}
+.rank-item:nth-child(2) .rk{background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#fff}
+.rank-item:nth-child(3) .rk{background:linear-gradient(135deg,#fb923c,#ea580c);color:#fff}
+.rank-item .nm{flex:1;font-weight:700;font-size:.9rem;color:var(--gray-800)}
+.rank-item .vl{font-family:'Space Grotesk',sans-serif;font-weight:800;color:var(--primary);font-size:1rem}
+
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.75rem}
+.cat-item{background:var(--gray-50);border-radius:var(--radius-md);padding:.85rem;text-align:center;border:1px solid var(--gray-100)}
+.cat-item .nm{font-size:.75rem;font-weight:700;color:var(--gray-600);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.3px}
+.cat-item .vl{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:800;color:var(--primary)}
+
+.comp-tile{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:var(--gray-50);border-radius:var(--radius-md);margin-bottom:.6rem;border:1px solid transparent;transition:var(--transition)}
+.comp-tile:hover{background:var(--green-50);border-color:var(--green-200)}
+.comp-tile:last-child{margin-bottom:0}
+.comp-tile .info h4{font-size:.92rem;font-weight:700;color:var(--gray-900)}
+.comp-tile .info p{font-size:.78rem;color:var(--gray-500);margin-top:.2rem}
+.comp-tile .dt{font-size:.78rem;color:var(--gray-500);font-weight:600;white-space:nowrap;margin-left:.5rem}
+
+.summary-bar{background:linear-gradient(135deg,var(--green-700),var(--green-500));color:#fff;border-radius:var(--radius-lg);padding:1.5rem 2rem;margin-bottom:2rem;display:flex;justify-content:space-around;flex-wrap:wrap;gap:1.5rem;box-shadow:var(--shadow-md)}
+.summary-bar .item{text-align:center}
+.summary-bar .item .n{font-family:'Space Grotesk',sans-serif;font-size:2.2rem;font-weight:900;line-height:1}
+.summary-bar .item .l{font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;opacity:.9;margin-top:.3rem;font-weight:700}
+
+.empty-mini{color:var(--gray-400);text-align:center;padding:1.25rem;font-size:.9rem}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container page-content">
+<div class="container stats-page">
     <div class="page-header">
         <h1>&#128202; Statistika</h1>
+        <p>O'zbekiston futboli bo'yicha umumiy ko'rsatkichlar va tahlil</p>
     </div>
-    <div class="empty-state">
-        <div class="icon">&#128202;</div>
-        <p>Statistika bo'limi tez orada ishga tushiriladi</p>
+
+    <!-- Yorqin summary -->
+    <div class="summary-bar">
+        <div class="item"><div class="n">{{ total_goals }}</div><div class="l">Jami gollar</div></div>
+        <div class="item"><div class="n">{{ totals.finished_matches }}</div><div class="l">O'tkazilgan o'yinlar</div></div>
+        <div class="item"><div class="n">{{ avg_goals_per_match }}</div><div class="l">O'yinga o'rtacha gol</div></div>
+        <div class="item"><div class="n">{{ totals.finished_competitions }}</div><div class="l">Yakunlangan musobaqalar</div></div>
+    </div>
+
+    <!-- Mini cards -->
+    <div class="stat-mini-grid">
+        <div class="stat-mini"><span class="ic">&#9917;</span><div class="n">{{ totals.teams }}</div><div class="l">Jamoalar</div></div>
+        <div class="stat-mini"><span class="ic">&#128101;</span><div class="n">{{ totals.players }}</div><div class="l">O'yinchilar</div></div>
+        <div class="stat-mini"><span class="ic">&#128100;</span><div class="n">{{ totals.coaches }}</div><div class="l">Murabbiylar</div></div>
+        <div class="stat-mini"><span class="ic">&#127942;</span><div class="n">{{ totals.competitions }}</div><div class="l">Musobaqalar</div></div>
+        <div class="stat-mini"><span class="ic">&#127963;</span><div class="n">{{ totals.stadiums }}</div><div class="l">Stadionlar</div></div>
+        <div class="stat-mini"><span class="ic">&#127759;</span><div class="n">{{ totals.regions }}</div><div class="l">Viloyatlar</div></div>
+        <div class="stat-mini"><span class="ic">&#127960;</span><div class="n">{{ totals.cities }}</div><div class="l">Shaharlar</div></div>
+        <div class="stat-mini"><span class="ic">&#128240;</span><div class="n">{{ totals.news }}</div><div class="l">Yangiliklar</div></div>
+    </div>
+
+    <!-- Row 1: positions + categories -->
+    <div class="stats-row">
+        <div class="stats-card">
+            <h3><span class="em">&#9881;</span> Pozitsiyalar bo'yicha o'yinchilar</h3>
+            {% if totals.players %}
+                {% for ps in position_stats %}
+                <div class="bar-row pos-row">
+                    <div class="lbl">{{ ps.label }}</div>
+                    <div class="bar"><div class="fill {{ ps.code|lower }}" style="width:{{ ps.percent }}%"></div></div>
+                    <div class="val">{{ ps.count }} ({{ ps.percent }}%)</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-mini">Ma'lumot yo'q</p>
+            {% endif %}
+        </div>
+
+        <div class="stats-card">
+            <h3><span class="em">&#128218;</span> Kategoriyalar bo'yicha jamoalar</h3>
+            {% if by_category %}
+            <div class="cat-grid">
+                {% for c in by_category %}
+                <div class="cat-item">
+                    <div class="nm">{{ c.name }}</div>
+                    <div class="vl">{{ c.team_count }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-mini">Ma'lumot yo'q</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Row 2: top scoring + top winning -->
+    <div class="stats-row">
+        <div class="stats-card">
+            <h3><span class="em">&#9917;</span> Eng ko'p gol urgan jamoalar</h3>
+            {% if top_scoring_teams %}
+            <div class="rank-list">
+                {% for t in top_scoring_teams %}
+                <a href="{% url 'core:team_detail' t.team.pk %}" class="rank-item">
+                    <div class="rk">{{ forloop.counter }}</div>
+                    <div class="nm">{{ t.team.name }}</div>
+                    <div class="vl">{{ t.goals }}</div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-mini">Hali yakunlangan o'yin yo'q</p>
+            {% endif %}
+        </div>
+
+        <div class="stats-card">
+            <h3><span class="em">&#127942;</span> Eng ko'p g'alaba qozongan jamoalar</h3>
+            {% if top_winning_teams %}
+            <div class="rank-list">
+                {% for t in top_winning_teams %}
+                <a href="{% url 'core:team_detail' t.team.pk %}" class="rank-item">
+                    <div class="rk">{{ forloop.counter }}</div>
+                    <div class="nm">{{ t.team.name }}</div>
+                    <div class="vl">{{ t.wins }}</div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-mini">Hali yakunlangan o'yin yo'q</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Row 3: regions + recent finished -->
+    <div class="stats-row">
+        <div class="stats-card">
+            <h3><span class="em">&#127759;</span> Viloyatlar bo'yicha jamoalar</h3>
+            {% if by_region %}
+                {% for r in by_region %}
+                <div class="bar-row">
+                    <div class="lbl">{{ r.name }}</div>
+                    <div class="bar"><div class="fill" style="width:{{ r.percent }}%"></div></div>
+                    <div class="val">{{ r.team_count }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <p class="empty-mini">Ma'lumot yo'q</p>
+            {% endif %}
+        </div>
+
+        <div class="stats-card">
+            <h3><span class="em">&#128197;</span> So'nggi yakunlangan musobaqalar</h3>
+            {% if recent_finished %}
+                {% for comp in recent_finished %}
+                <a href="{% url 'core:competition_detail' comp.pk %}" class="comp-tile">
+                    <div class="info">
+                        <h4>{{ comp.name }}</h4>
+                        <p>{{ comp.get_type_display }} &middot; {{ comp.category.name }}</p>
+                    </div>
+                    <div class="dt">{{ comp.date }}</div>
+                </a>
+                {% endfor %}
+            {% else %}
+            <p class="empty-mini">Hali yakunlangan musobaqa yo'q</p>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
