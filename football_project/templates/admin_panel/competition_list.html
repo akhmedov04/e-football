@@ -1,15 +1,162 @@
 {% extends 'admin_panel/base.html' %}
+{% block title %}Musobaqalar{% endblock %}
+
+{% block extra_css %}
+<style>
+.cl-toolbar{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:1rem;margin-bottom:1.25rem;display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
+.cl-toolbar .search-box{flex:1;min-width:220px;position:relative}
+.cl-toolbar .search-box input{width:100%;padding:.55rem .9rem .55rem 2.25rem;border:1.5px solid var(--gray-200);border-radius:var(--radius-md);font-size:.9rem;font-family:'Nunito',sans-serif}
+.cl-toolbar .search-box input:focus{outline:none;border-color:var(--green-400)}
+.cl-toolbar .search-box::before{content:"🔍";position:absolute;left:.75rem;top:50%;transform:translateY(-50%);opacity:.5;font-size:.85rem}
+.cl-toolbar select{padding:.55rem .9rem;border:1.5px solid var(--gray-200);border-radius:var(--radius-md);font-size:.85rem;font-family:'Nunito',sans-serif;background:#fff;cursor:pointer}
+.cl-toolbar select:focus{outline:none;border-color:var(--green-400)}
+.cl-toolbar .reset{color:var(--gray-500);font-size:.85rem;font-weight:600;padding:.4rem .6rem}
+.cl-toolbar .reset:hover{color:var(--green-700)}
+.cl-count{font-size:.8rem;color:var(--gray-500);font-weight:600}
+
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1rem}
+.comp-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:1.25rem;transition:var(--transition);position:relative;overflow:hidden}
+.comp-card:hover{box-shadow:var(--shadow-md);border-color:var(--green-300);transform:translateY(-1px)}
+.comp-card .head{display:flex;justify-content:space-between;align-items:start;gap:.5rem;margin-bottom:.7rem}
+.comp-card h3{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:800;color:var(--gray-900);line-height:1.25}
+.comp-card .meta{font-size:.78rem;color:var(--gray-500);margin-top:.2rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.comp-card .meta .em{opacity:.7;font-size:.85rem}
+.comp-card .status-pill{flex-shrink:0;font-size:.7rem;font-weight:800;padding:.25rem .55rem;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.status-pending{background:#fef3c7;color:#92400e}
+.status-active{background:#dcfce7;color:#15803d}
+.status-finished{background:#f3f4f6;color:#4b5563}
+
+.comp-progress{margin:.75rem 0 1rem}
+.comp-progress-bar{height:7px;background:var(--gray-100);border-radius:999px;overflow:hidden}
+.comp-progress-bar .fill{height:100%;background:linear-gradient(90deg,var(--green-500),var(--green-400));border-radius:999px;transition:width .4s ease}
+.comp-progress-bar.full .fill{background:linear-gradient(90deg,#94a3b8,#cbd5e1)}
+.comp-progress-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;font-size:.75rem;color:var(--gray-500);font-weight:700}
+.comp-progress-info .pct{color:var(--green-700);font-family:'Space Grotesk',sans-serif;font-size:.85rem}
+
+.comp-card .actions{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;padding-top:.85rem;border-top:1px solid var(--gray-100)}
+.comp-card .actions form{display:inline}
+.btn-icon{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;color:var(--gray-700);transition:var(--transition);text-decoration:none;flex-shrink:0}
+.btn-icon:hover{border-color:var(--green-400);color:var(--green-700);background:var(--green-50)}
+.btn-icon.danger:hover{border-color:#fca5a5;color:#dc2626;background:#fef2f2}
+.btn-icon.warn:hover{border-color:#fcd34d;color:#d97706;background:#fffbeb}
+.btn-primary-soft{padding:.4rem .85rem;border-radius:8px;background:var(--green-600);color:#fff;font-size:.78rem;font-weight:700;border:0;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;font-family:'Nunito',sans-serif}
+.btn-primary-soft:hover{background:var(--green-700)}
+.btn-secondary-soft{padding:.4rem .85rem;border-radius:8px;background:var(--gray-100);color:var(--gray-700);font-size:.78rem;font-weight:700;border:0;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;font-family:'Nunito',sans-serif}
+.btn-secondary-soft:hover{background:var(--gray-200)}
+
+.cl-empty{background:#fff;border:1px dashed var(--gray-300);border-radius:var(--radius-lg);padding:3rem 2rem;text-align:center;color:var(--gray-400)}
+.cl-empty .em{font-size:2.5rem;display:block;margin-bottom:.5rem;opacity:.6}
+</style>
+{% endblock %}
+
 {% block admin_content %}
-<div class="admin-list-header"><h2>&#127942; Musobaqalar</h2><a href="{% url 'core:admin_competition_create' %}" class="btn btn-primary">&#10010; Yaratish</a></div>
-<div class="table-wrapper"><table><thead><tr><th>Nomi</th><th>Turi</th><th>Sana</th><th>Holat</th><th>Amallar</th></tr></thead><tbody>
-{% for c in competitions %}<tr><td><strong>{{ c.name }}</strong></td><td><span class="badge badge-blue">{{ c.get_type_display }}</span></td><td>{{ c.date }}</td>
-<td>{% if c.is_finished %}<span class="badge badge-gray">Yakunlangan</span>{% elif c.draw_done %}<span class="badge badge-green">Faol</span>{% else %}<span class="badge badge-yellow">Qur'a kutilmoqda</span>{% endif %}</td>
-<td>{% if not c.draw_done and not c.is_finished %}<form method="post" action="{% url 'core:admin_competition_draw' c.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-primary" onclick="return confirm('Qur\'a?')">&#127922; Qur'a</button></form>{% endif %}
-{% if c.draw_done %}<a href="{% url 'core:admin_competition_scores' c.pk %}" class="btn btn-sm btn-secondary">&#9998; Natijalar</a>{% endif %}
-{% if c.draw_done and not c.is_finished %}<form method="post" action="{% url 'core:admin_competition_reset_draw' c.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-outline" onclick="return confirm('Qur\'a bekor qilinsinmi? Barcha o\'yinlar o\'chiriladi!')" style="color:#d97706">&#8634;</button></form>{% endif %}
-{% if c.draw_done and not c.is_finished %}<form method="post" action="{% url 'core:admin_competition_finish' c.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-outline" onclick="return confirm('Yakunlansinmi?')">&#9989;</button></form>{% endif %}
-{% if not c.is_finished %}<a href="{% url 'core:admin_competition_edit' c.pk %}" class="btn btn-sm btn-secondary">&#9881;</a>{% endif %}
-<form method="post" action="{% url 'core:admin_competition_delete' c.pk %}" style="display:inline">{% csrf_token %}<button class="btn btn-sm btn-outline" onclick="return confirm('O\'chirilsinmi? Bu amalni qaytarib bo\'lmaydi!')" style="color:#dc2626">&#128465;</button></form>
-</td></tr>
-{% empty %}<tr><td colspan="5" class="text-center" style="padding:2rem;color:var(--gray-400)">Yo'q</td></tr>{% endfor %}
-</tbody></table></div>{% endblock %}
+<div class="admin-list-header">
+    <div>
+        <h2>&#127942; Musobaqalar</h2>
+        <p style="color:var(--gray-500);font-size:.85rem;margin-top:.2rem">Jami: <strong>{{ total_count }}</strong> ta musobaqa</p>
+    </div>
+    <a href="{% url 'core:admin_competition_create' %}" class="btn btn-primary">&#10010; Yangi musobaqa</a>
+</div>
+
+<form method="get" class="cl-toolbar">
+    <div class="search-box">
+        <input type="text" name="q" value="{{ q }}" placeholder="Nomi bo'yicha qidirish...">
+    </div>
+    <select name="status" onchange="this.form.submit()">
+        <option value="">Barcha holatlar</option>
+        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Qur'a kutilmoqda</option>
+        <option value="active" {% if status == 'active' %}selected{% endif %}>Faol</option>
+        <option value="finished" {% if status == 'finished' %}selected{% endif %}>Yakunlangan</option>
+    </select>
+    <select name="type" onchange="this.form.submit()">
+        <option value="">Barcha turlari</option>
+        <option value="round_robin" {% if ctype == 'round_robin' %}selected{% endif %}>Doiraviy</option>
+        <option value="olympic" {% if ctype == 'olympic' %}selected{% endif %}>Olimpik</option>
+    </select>
+    <button type="submit" class="btn-primary-soft">Qidirish</button>
+    {% if q or status or ctype %}
+    <a href="{% url 'core:admin_competition_list' %}" class="reset">&times; Tozalash</a>
+    {% endif %}
+</form>
+
+{% if items %}
+<div class="comp-grid">
+    {% for it in items %}
+    {% with c=it.comp %}
+    <div class="comp-card">
+        <div class="head">
+            <div style="flex:1;min-width:0">
+                <h3>{{ c.name }}</h3>
+                <div class="meta">
+                    <span><span class="em">&#128197;</span> {{ c.date }}</span>
+                    <span><span class="em">&#127942;</span> {{ c.get_type_display }}</span>
+                    <span><span class="em">&#128218;</span> {{ c.category.name }}</span>
+                </div>
+                <div class="meta" style="margin-top:.3rem">
+                    {% if c.stadium %}<span><span class="em">&#127963;</span> {{ c.stadium.name }}</span>{% endif %}
+                    <span><span class="em">&#9917;</span> {{ c.teams.count }} ta jamoa</span>
+                </div>
+            </div>
+            {% if c.is_finished %}
+                <span class="status-pill status-finished">Yakunlangan</span>
+            {% elif c.draw_done %}
+                <span class="status-pill status-active">Faol</span>
+            {% else %}
+                <span class="status-pill status-pending">Qur'a kutilmoqda</span>
+            {% endif %}
+        </div>
+
+        {% if c.draw_done %}
+        <div class="comp-progress">
+            <div class="comp-progress-info">
+                <span>Natijalar: {{ it.done }} / {{ it.total }}</span>
+                <span class="pct">{{ it.progress }}%</span>
+            </div>
+            <div class="comp-progress-bar {% if it.progress == 100 %}full{% endif %}">
+                <div class="fill" style="width:{{ it.progress }}%"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="actions">
+            {% if not c.draw_done and not c.is_finished %}
+                <form method="post" action="{% url 'core:admin_competition_draw' c.pk %}">{% csrf_token %}
+                    <button class="btn-primary-soft" onclick="return confirm('Qur\'a tashlansinmi?')">&#127922; Qur'a tashlash</button>
+                </form>
+            {% endif %}
+            {% if c.draw_done %}
+                <a href="{% url 'core:admin_competition_scores' c.pk %}" class="btn-primary-soft">&#9998; Natijalar</a>
+            {% endif %}
+            {% if c.draw_done and not c.is_finished %}
+                <form method="post" action="{% url 'core:admin_competition_reset_draw' c.pk %}">{% csrf_token %}
+                    <button class="btn-icon warn" title="Qur'ani bekor qilish" onclick="return confirm('Qur\'a bekor qilinsinmi? Barcha o\'yinlar o\'chiriladi!')">&#8634;</button>
+                </form>
+                <form method="post" action="{% url 'core:admin_competition_finish' c.pk %}">{% csrf_token %}
+                    <button class="btn-icon" title="Yakunlash" onclick="return confirm('Musobaqa yakunlansinmi?')">&#9989;</button>
+                </form>
+            {% endif %}
+            <a href="{% url 'core:competition_detail' c.pk %}" target="_blank" class="btn-icon" title="Saytda ko'rish">&#128065;</a>
+            {% if not c.is_finished %}
+                <a href="{% url 'core:admin_competition_edit' c.pk %}" class="btn-icon" title="Tahrirlash">&#9881;</a>
+            {% endif %}
+            <form method="post" action="{% url 'core:admin_competition_delete' c.pk %}" style="margin-left:auto">{% csrf_token %}
+                <button class="btn-icon danger" title="O'chirish" onclick="return confirm('Musobaqa o\'chirilsinmi? Bu amalni qaytarib bo\'lmaydi!')">&#128465;</button>
+            </form>
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="cl-empty">
+    <span class="em">&#127942;</span>
+    {% if q or status or ctype %}
+    <p>Filtr bo'yicha musobaqa topilmadi.</p>
+    <a href="{% url 'core:admin_competition_list' %}" style="color:var(--green-600);font-weight:700">Filtrlarni tozalash</a>
+    {% else %}
+    <p>Hozircha musobaqalar yo'q.</p>
+    <a href="{% url 'core:admin_competition_create' %}" class="btn-primary-soft" style="margin-top:1rem;display:inline-flex">&#10010; Birinchi musobaqani yaratish</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

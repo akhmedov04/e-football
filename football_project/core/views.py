@@ -384,9 +384,38 @@ def admin_player_request_review(request,pk):
 # COMPETITIONS
 @superuser_or_radmin
 def admin_competition_list(request):
-    role=get_user_role(request.user)
-    comps=Competition.objects.all() if role=='superuser' else Competition.objects.filter(stadium__city__region=get_user_region(request.user))
-    return render(request,'admin_panel/competition_list.html',{'competitions':comps})
+    role = get_user_role(request.user)
+    comps = Competition.objects.all() if role == 'superuser' else Competition.objects.filter(stadium__city__region=get_user_region(request.user))
+    comps = comps.select_related('category', 'stadium').prefetch_related('teams', 'matches')
+
+    # Filtrlar
+    q = (request.GET.get('q') or '').strip()
+    status = request.GET.get('status', '')
+    ctype = request.GET.get('type', '')
+    if q:
+        comps = comps.filter(name__icontains=q)
+    if status == 'pending':
+        comps = comps.filter(draw_done=False, is_finished=False)
+    elif status == 'active':
+        comps = comps.filter(draw_done=True, is_finished=False)
+    elif status == 'finished':
+        comps = comps.filter(is_finished=True)
+    if ctype in ('round_robin', 'olympic'):
+        comps = comps.filter(type=ctype)
+
+    # Progressni hisoblash
+    items = []
+    for c in comps:
+        total = c.matches.exclude(is_bye=True).count()
+        done = c.matches.filter(is_finished=True, is_bye=False).count()
+        progress = round(done * 100 / total) if total else 0
+        items.append({'comp': c, 'total': total, 'done': done, 'progress': progress})
+
+    return render(request, 'admin_panel/competition_list.html', {
+        'items': items,
+        'q': q, 'status': status, 'ctype': ctype,
+        'total_count': len(items),
+    })
 @superuser_or_radmin
 def admin_competition_create(request):
     role=get_user_role(request.user);region=get_user_region(request.user);kw={'region':region} if role=='region_admin' else {}
@@ -471,12 +500,54 @@ def admin_competition_reset_draw(request,pk):
 
 @superuser_or_radmin
 def admin_competition_scores(request,pk):
-    comp=get_object_or_404(Competition,pk=pk);matches=comp.matches.select_related('team_home','team_away').order_by('round_number')
+    comp = get_object_or_404(Competition, pk=pk)
+    matches = comp.matches.select_related('team_home', 'team_away').order_by('round_number', 'id')
     deny = _check_comp_access(request, comp)
     if deny: return deny
+
+    def build_round_groups():
+        groups = {}
+        for m in matches:
+            groups.setdefault(m.round_number, []).append(m)
+        out = []
+        sorted_keys = sorted(groups.keys())
+        total_rounds = len(sorted_keys)
+        for idx, rnum in enumerate(sorted_keys):
+            ms = groups[rnum]
+            non_bye = [m for m in ms if not m.is_bye]
+            done = sum(1 for m in non_bye if m.is_finished)
+            # Olimpikda nomlash
+            if comp.type == 'olympic':
+                real_count = len(non_bye)
+                rounds_from_end = total_rounds - 1 - idx
+                if rounds_from_end == 0:
+                    label = "Final"
+                elif rounds_from_end == 1:
+                    label = "Yarim final"
+                elif rounds_from_end == 2:
+                    label = "Chorak final"
+                else:
+                    label = f"{rnum}-raund"
+            else:
+                label = f"{rnum}-matchday"
+            out.append({
+                'round_number': rnum,
+                'label': label,
+                'matches': ms,
+                'total': len(non_bye),
+                'done': done,
+                'progress': round(done * 100 / len(non_bye)) if non_bye else 100,
+                'all_finished': done == len(non_bye) and len(non_bye) > 0,
+            })
+        return out
+
     if comp.is_finished:
         messages.info(request, "Musobaqa yakunlangan — natijalarni faqat ko'rishingiz mumkin.")
-        return render(request,'admin_panel/competition_scores.html',{'comp':comp,'matches':matches,'readonly':True})
+        return render(request, 'admin_panel/competition_scores.html', {
+            'comp': comp, 'matches': matches, 'round_groups': build_round_groups(),
+            'standings': comp.get_standings() if comp.type == 'round_robin' else None,
+            'readonly': True,
+        })
     if request.method=='POST':
         errors = []
         saved = 0
@@ -513,7 +584,10 @@ def admin_competition_scores(request,pk):
         if saved:
             messages.success(request, f"{saved} ta o'yin saqlandi.")
         return redirect('core:admin_competition_scores',pk=pk)
-    return render(request,'admin_panel/competition_scores.html',{'comp':comp,'matches':matches})
+    return render(request, 'admin_panel/competition_scores.html', {
+        'comp': comp, 'matches': matches, 'round_groups': build_round_groups(),
+        'standings': comp.get_standings() if comp.type == 'round_robin' else None,
+    })
 
 @superuser_or_radmin
 def admin_competition_finish(request,pk):

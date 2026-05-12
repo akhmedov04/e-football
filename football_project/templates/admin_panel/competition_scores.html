@@ -1,14 +1,297 @@
 {% extends 'admin_panel/base.html' %}
+{% load core_tags %}
+{% block title %}{{ comp.name }} — Natijalar{% endblock %}
+
+{% block extra_css %}
+<style>
+.cs-header{display:flex;justify-content:space-between;align-items:start;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.cs-header h2{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1.5rem;color:var(--gray-900)}
+.cs-header .meta{display:flex;gap:.75rem;flex-wrap:wrap;font-size:.82rem;color:var(--gray-500);margin-top:.4rem}
+.cs-header .meta span{display:inline-flex;align-items:center;gap:.3rem}
+.cs-header .actions{display:flex;gap:.5rem;flex-wrap:wrap}
+
+.cs-grid{display:grid;grid-template-columns:1fr;gap:1.25rem}
+.cs-grid.with-side{grid-template-columns:1fr 320px}
+@media(max-width:1100px){.cs-grid.with-side{grid-template-columns:1fr}}
+
+.cs-readonly-banner{background:linear-gradient(135deg,#fef3c7,#fed7aa);border:1px solid #fbbf24;color:#92400e;padding:.85rem 1.1rem;border-radius:var(--radius-md);margin-bottom:1rem;font-size:.85rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+
+.round-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem}
+.round-card.complete{border-color:var(--green-300)}
+.round-head{display:flex;justify-content:space-between;align-items:center;padding:.85rem 1.15rem;background:linear-gradient(90deg,var(--gray-50),#fff);border-bottom:1px solid var(--gray-100);gap:1rem;flex-wrap:wrap}
+.round-card.complete .round-head{background:linear-gradient(90deg,#f0fdf4,#fff)}
+.round-head .title{font-family:'Space Grotesk',sans-serif;font-weight:800;color:var(--gray-900);font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.round-head .title .num{background:var(--green-600);color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem}
+.round-card.complete .round-head .title .num{background:var(--green-500)}
+.round-progress{font-size:.78rem;color:var(--gray-500);font-weight:700;display:flex;align-items:center;gap:.5rem}
+.round-progress .mini-bar{width:80px;height:5px;background:var(--gray-100);border-radius:999px;overflow:hidden}
+.round-progress .mini-bar .fill{height:100%;background:var(--green-500);border-radius:999px;transition:width .3s ease}
+.round-progress .pct{font-family:'Space Grotesk',sans-serif;color:var(--green-700);min-width:32px;text-align:right}
+
+.round-body{padding:.75rem 1.15rem 1.15rem}
+
+.match-row{display:grid;grid-template-columns:1fr 240px 1fr 60px;align-items:center;gap:.85rem;padding:.7rem .35rem;border-bottom:1px dashed var(--gray-100);transition:background .15s}
+.match-row:last-child{border-bottom:0}
+.match-row:hover{background:var(--green-50)}
+.match-row.is-bye{opacity:.55}
+.match-row.is-bye:hover{background:transparent}
+@media(max-width:680px){
+    .match-row{grid-template-columns:1fr;gap:.4rem}
+}
+
+.team-side{display:flex;align-items:center;gap:.6rem;min-width:0;font-weight:700;font-size:.92rem;color:var(--gray-800)}
+.team-side.away{justify-content:flex-end;text-align:right}
+.team-side.away .name{order:2}
+.team-side .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team-side .badge-home,.team-side .badge-away{font-size:.62rem;font-weight:800;padding:.1rem .35rem;border-radius:4px;text-transform:uppercase;letter-spacing:.4px}
+.team-side .badge-home{background:#dbeafe;color:#1d4ed8}
+.team-side .badge-away{background:#fce7f3;color:#be185d}
+
+.score-block{display:flex;align-items:center;justify-content:center;gap:.45rem}
+.score-input{width:54px;height:38px;text-align:center;font-family:'Space Grotesk',sans-serif;font-size:1.15rem;font-weight:800;border:1.5px solid var(--gray-300);border-radius:8px;background:#fff;color:var(--gray-900);outline:none;-moz-appearance:textfield}
+.score-input::-webkit-outer-spin-button,.score-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.score-input:focus{border-color:var(--green-500);box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+.score-input:disabled{background:var(--gray-50);color:var(--gray-500);cursor:not-allowed}
+.score-sep{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:800;color:var(--gray-400)}
+
+.winner-select{margin-top:.5rem;grid-column:1 / -1;display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:#a16207;background:#fef9c3;padding:.4rem .65rem;border-radius:8px;border:1px solid #fde68a}
+.winner-select select{flex:1;padding:.3rem .5rem;border-radius:6px;border:1.5px solid #fbbf24;background:#fff;font-weight:700;font-size:.82rem;font-family:'Nunito',sans-serif}
+.winner-select.ok{background:#dcfce7;border-color:#86efac;color:#15803d}
+.winner-select.ok select{border-color:#86efac}
+
+.fin-check{display:flex;align-items:center;justify-content:center}
+.fin-toggle{position:relative;display:inline-block;width:42px;height:22px}
+.fin-toggle input{opacity:0;width:0;height:0}
+.fin-toggle .slider{position:absolute;cursor:pointer;inset:0;background:var(--gray-300);border-radius:999px;transition:.25s}
+.fin-toggle .slider::before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.fin-toggle input:checked + .slider{background:var(--green-500)}
+.fin-toggle input:checked + .slider::before{transform:translateX(20px)}
+.fin-toggle input:disabled + .slider{opacity:.5;cursor:not-allowed}
+
+.bye-label{text-align:center;font-style:italic;color:var(--gray-400);font-weight:700;font-size:.85rem;letter-spacing:.5px}
+
+.save-bar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--gray-200);padding:.85rem 1.15rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:1rem;border-radius:0 0 var(--radius-lg) var(--radius-lg);box-shadow:0 -4px 12px rgba(0,0,0,.04);z-index:5}
+.save-bar .info{font-size:.82rem;color:var(--gray-600);font-weight:600}
+.save-bar .info .num{color:var(--green-700);font-family:'Space Grotesk',sans-serif;font-weight:800}
+.btn-save{background:var(--green-600);color:#fff;padding:.6rem 1.4rem;border:0;border-radius:8px;font-weight:800;font-size:.9rem;cursor:pointer;font-family:'Nunito',sans-serif;display:inline-flex;align-items:center;gap:.4rem;transition:var(--transition)}
+.btn-save:hover{background:var(--green-700);transform:translateY(-1px);box-shadow:0 4px 12px rgba(22,163,74,.25)}
+
+/* Standings sidebar */
+.side-panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:1.15rem;position:sticky;top:90px;max-height:calc(100vh - 100px);overflow-y:auto}
+.side-panel h3{font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1rem;margin-bottom:.85rem;color:var(--gray-900);display:flex;align-items:center;gap:.4rem}
+.mini-standings{width:100%;font-size:.8rem;border-collapse:collapse}
+.mini-standings th{background:var(--gray-50);padding:.4rem .35rem;text-align:center;font-size:.65rem;font-weight:800;color:var(--gray-500);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--gray-200)}
+.mini-standings td{padding:.45rem .35rem;text-align:center;border-bottom:1px solid var(--gray-100);font-weight:700;color:var(--gray-700)}
+.mini-standings td.tm{text-align:left;font-weight:700;color:var(--gray-900);font-size:.82rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-standings td.pts{color:var(--green-700);font-family:'Space Grotesk',sans-serif;font-size:.9rem}
+.mini-standings tr.first td{background:#fef9c3}
+.mini-standings tr.first td:first-child::before{content:"&#127942;";margin-right:.2rem;font-size:.7rem}
+
+.next-round-banner{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1px solid var(--green-300);padding:.85rem 1.15rem;border-radius:var(--radius-md);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.next-round-banner .txt{font-size:.85rem;color:var(--green-800);font-weight:700;display:flex;align-items:center;gap:.5rem}
+
+.empty-state-cs{background:#fff;border:1px dashed var(--gray-300);border-radius:var(--radius-lg);padding:3rem 2rem;text-align:center;color:var(--gray-400)}
+</style>
+{% endblock %}
+
 {% block admin_content %}
-<div class="admin-list-header"><h2>&#9998; {{ comp.name }} — Natijalar</h2>
-<div class="flex gap-1">{% if comp.type == 'olympic' and comp.draw_done and not comp.is_finished %}<form method="post" action="{% url 'core:admin_competition_next_round' comp.pk %}">{% csrf_token %}<button class="btn btn-outline" onclick="return confirm('Keyingi raund?')">&#8680; Keyingi raund</button></form>{% endif %}<a href="{% url 'core:admin_competition_list' %}" class="btn btn-secondary">&#8592; Orqaga</a></div></div>
-<form method="post">{% csrf_token %}<div class="table-wrapper"><table><thead><tr><th>Raund</th><th>Uy</th><th class="table-center">Hisob</th><th>Mehmon</th>{% if comp.type == 'olympic' %}<th>G'olib (durang)</th>{% endif %}<th class="table-center">&#10004;</th></tr></thead><tbody>
-{% for m in matches %}<tr {% if m.is_bye %}style="opacity:.5"{% endif %}><td><span class="badge badge-blue">R{{ m.round_number }}</span></td><td><strong>{{ m.team_home.name }}</strong></td>
-<td class="table-center" style="white-space:nowrap">{% if m.is_bye %}BYE{% else %}<input type="number" name="score_home_{{ m.id }}" value="{{ m.score_home|default_if_none:'' }}" class="score-input" min="0"> : <input type="number" name="score_away_{{ m.id }}" value="{{ m.score_away|default_if_none:'' }}" class="score-input" min="0">{% endif %}</td>
-<td><strong>{% if m.is_bye %}—{% else %}{{ m.team_away.name }}{% endif %}</strong></td>
-{% if comp.type == 'olympic' %}
-<td>{% if m.is_bye %}—{% else %}<select name="winner_{{ m.id }}" class="form-select"><option value="">Tanlang</option><option value="{{ m.team_home_id }}" {% if m.winner_id == m.team_home_id %}selected{% endif %}>{{ m.team_home.name }}</option><option value="{{ m.team_away_id }}" {% if m.winner_id == m.team_away_id %}selected{% endif %}>{{ m.team_away.name }}</option></select>{% endif %}</td>
+<div class="cs-header">
+    <div>
+        <h2>&#9998; {{ comp.name }}</h2>
+        <div class="meta">
+            <span>&#127942; {{ comp.get_type_display }}</span>
+            <span>&#128218; {{ comp.category.name }}</span>
+            <span>&#128197; {{ comp.date }}</span>
+            {% if comp.stadium %}<span>&#127963; {{ comp.stadium.name }}</span>{% endif %}
+            <span>&#9917; {{ comp.teams.count }} ta jamoa</span>
+        </div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'core:competition_detail' comp.pk %}" target="_blank" class="btn btn-outline">&#128065; Saytda ko'rish</a>
+        <a href="{% url 'core:admin_competition_list' %}" class="btn btn-secondary">&#8592; Orqaga</a>
+    </div>
+</div>
+
+{% if readonly %}
+<div class="cs-readonly-banner">
+    &#128274; Musobaqa yakunlangan — natijalar faqat ko'rsatma uchun.
+</div>
 {% endif %}
-<td class="table-center">{% if m.is_bye %}&#10004;{% else %}<input type="checkbox" name="finished_{{ m.id }}" value="1" {% if m.is_finished %}checked{% endif %}>{% endif %}</td></tr>{% endfor %}
-</tbody></table></div>{% if matches %}<div class="mt-2"><button type="submit" class="btn btn-primary">&#10004; Saqlash</button></div>{% endif %}</form>
-<div class="mt-3"><a href="{% url 'core:competition_detail' comp.pk %}" class="btn btn-outline" target="_blank">&#128065; Ko'rish</a></div>{% endblock %}
+
+{% if comp.type == 'olympic' and comp.draw_done and not comp.is_finished %}
+{% with last_round=round_groups|last %}
+{% if last_round.all_finished %}
+<div class="next-round-banner">
+    <span class="txt">&#9989; "{{ last_round.label }}" raundi yakunlandi — keyingi raundga o'tish mumkin</span>
+    <form method="post" action="{% url 'core:admin_competition_next_round' comp.pk %}">
+        {% csrf_token %}
+        <button class="btn-primary-soft" onclick="return confirm('Keyingi raund yaratilsinmi?')" style="padding:.5rem 1.1rem">&#8680; Keyingi raund</button>
+    </form>
+</div>
+{% endif %}
+{% endwith %}
+{% endif %}
+
+<div class="cs-grid {% if standings %}with-side{% endif %}">
+    <div>
+        <form method="post" id="scoresForm">
+            {% csrf_token %}
+            {% for grp in round_groups %}
+            <div class="round-card {% if grp.all_finished %}complete{% endif %}">
+                <div class="round-head">
+                    <div class="title">
+                        <span class="num">{{ grp.round_number }}</span>
+                        {{ grp.label }}
+                    </div>
+                    <div class="round-progress">
+                        <span>{{ grp.done }} / {{ grp.total }}</span>
+                        <div class="mini-bar"><div class="fill" style="width:{{ grp.progress }}%"></div></div>
+                        <span class="pct">{{ grp.progress }}%</span>
+                    </div>
+                </div>
+                <div class="round-body">
+                    {% for m in grp.matches %}
+                    {% if m.is_bye %}
+                    <div class="match-row is-bye">
+                        <div class="team-side"><span class="name">{{ m.team_home.name }}</span></div>
+                        <div class="bye-label">— BYE (avtomatik o'tish) —</div>
+                        <div class="team-side away"><span class="name">—</span></div>
+                        <div class="fin-check">&#10004;</div>
+                    </div>
+                    {% else %}
+                    <div class="match-row">
+                        <div class="team-side">
+                            <span class="badge-home">Uy</span>
+                            <span class="name">{{ m.team_home.name }}</span>
+                        </div>
+                        <div>
+                            <div class="score-block">
+                                <input type="number" name="score_home_{{ m.id }}" value="{{ m.score_home|default_if_none:'' }}" class="score-input" min="0" {% if readonly %}disabled{% endif %}>
+                                <span class="score-sep">:</span>
+                                <input type="number" name="score_away_{{ m.id }}" value="{{ m.score_away|default_if_none:'' }}" class="score-input" min="0" {% if readonly %}disabled{% endif %}>
+                            </div>
+                            {% if comp.type == 'olympic' %}
+                            <div class="winner-select {% if m.winner_id %}ok{% endif %}" data-match="{{ m.id }}" style="display:none">
+                                <span>Durang — g'olib:</span>
+                                <select name="winner_{{ m.id }}" {% if readonly %}disabled{% endif %}>
+                                    <option value="">Tanlang...</option>
+                                    <option value="{{ m.team_home_id }}" {% if m.winner_id == m.team_home_id %}selected{% endif %}>{{ m.team_home.name }}</option>
+                                    <option value="{{ m.team_away_id }}" {% if m.winner_id == m.team_away_id %}selected{% endif %}>{{ m.team_away.name }}</option>
+                                </select>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="team-side away">
+                            <span class="name">{{ m.team_away.name }}</span>
+                            <span class="badge-away">Mehmon</span>
+                        </div>
+                        <div class="fin-check">
+                            <label class="fin-toggle" title="Yakunlandi">
+                                <input type="checkbox" name="finished_{{ m.id }}" value="1" {% if m.is_finished %}checked{% endif %} {% if readonly %}disabled{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state-cs">
+                <p style="font-size:2.5rem;opacity:.5">&#127942;</p>
+                <p>Bu musobaqada hali matchlar yo'q.</p>
+            </div>
+            {% endfor %}
+
+            {% if round_groups and not readonly %}
+            <div class="save-bar">
+                <div class="info">
+                    <span class="num" id="changedCount">0</span> ta o'zgarish kiritildi
+                </div>
+                <button type="submit" class="btn-save">&#10004; Saqlash</button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if standings %}
+    <aside class="side-panel">
+        <h3>&#128202; Turnir jadvali</h3>
+        <table class="mini-standings">
+            <thead>
+                <tr><th>#</th><th style="text-align:left">Jamoa</th><th>O</th><th>G</th><th>D</th><th>M</th><th>GD</th><th>Pts</th></tr>
+            </thead>
+            <tbody>
+                {% for row in standings %}
+                <tr {% if forloop.first %}class="first"{% endif %}>
+                    <td>{{ forloop.counter }}</td>
+                    <td class="tm">{{ row.team.name }}</td>
+                    <td>{{ row.played }}</td>
+                    <td>{{ row.won }}</td>
+                    <td>{{ row.drawn }}</td>
+                    <td>{{ row.lost }}</td>
+                    <td>{{ row.goal_diff }}</td>
+                    <td class="pts">{{ row.points }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" style="padding:1.5rem;color:var(--gray-400)">Hali natijalar yo'q</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p style="font-size:.7rem;color:var(--gray-400);margin-top:.75rem;line-height:1.4">Faqat yakunlangan matchlar hisoblanadi. Tartib: ochkolar → gol farqi → urilgan gollar.</p>
+    </aside>
+    {% endif %}
+</div>
+
+<script>
+// Durang select'ni avtomatik ko'rsatish/yashirish (olimpik)
+function checkDraw(input) {
+    const id = input.name.replace('score_home_', '').replace('score_away_', '');
+    const home = document.querySelector(`[name="score_home_${id}"]`);
+    const away = document.querySelector(`[name="score_away_${id}"]`);
+    const finCheck = document.querySelector(`[name="finished_${id}"]`);
+    const sel = document.querySelector(`.winner-select[data-match="${id}"]`);
+    if (!sel) return;
+    const hv = (home.value || '').trim(), av = (away.value || '').trim();
+    if (hv !== '' && av !== '' && hv === av && finCheck && finCheck.checked) {
+        sel.style.display = 'flex';
+    } else {
+        sel.style.display = 'none';
+    }
+}
+
+document.querySelectorAll('.score-input').forEach(inp => {
+    inp.addEventListener('input', () => checkDraw(inp));
+    checkDraw(inp);
+});
+document.querySelectorAll('[name^="finished_"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+        const id = cb.name.replace('finished_', '');
+        const home = document.querySelector(`[name="score_home_${id}"]`);
+        if (home) checkDraw(home);
+    });
+});
+
+// O'zgarishlar sonini ko'rsatish
+const form = document.getElementById('scoresForm');
+if (form) {
+    const initial = new FormData(form);
+    const initialMap = {};
+    initial.forEach((v, k) => initialMap[k] = v);
+    const counter = document.getElementById('changedCount');
+    function recount() {
+        const current = new FormData(form);
+        let count = 0;
+        const seen = new Set();
+        current.forEach((v, k) => {
+            seen.add(k);
+            if ((initialMap[k] || '') !== (v || '')) count++;
+        });
+        Object.keys(initialMap).forEach(k => { if (!seen.has(k)) count++; });
+        if (counter) counter.textContent = count;
+    }
+    form.addEventListener('input', recount);
+    form.addEventListener('change', recount);
+}
+</script>
+{% endblock %}
