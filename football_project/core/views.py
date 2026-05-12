@@ -1,15 +1,62 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django.contrib import messages
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.conf import settings
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from django.db.models import Q, Count, Sum, F, Case, When, IntegerField
 from datetime import timedelta
 from functools import wraps
 from django.utils.http import url_has_allowed_host_and_scheme
 from .models import *
 from .forms import *
+
+
+def _client_ip(request):
+    """Klient IP manzilini olish (proxy orqasidan ham)."""
+    xff = request.META.get('HTTP_X_FORWARDED_FOR')
+    if xff:
+        return xff.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '0.0.0.0')
+
+
+def _login_rate_check(request):
+    """Brute-force tekshiruvi. (allowed, seconds_until_unlock) qaytaradi."""
+    ip = _client_ip(request)
+    lockout_key = f"login_lockout:{ip}"
+    unlock_ts = cache.get(lockout_key)
+    if unlock_ts:
+        remaining = int(unlock_ts - timezone.now().timestamp())
+        if remaining > 0:
+            return False, remaining
+        cache.delete(lockout_key)
+    return True, 0
+
+
+def _login_record_failure(request):
+    """Muvaffaqiyatsiz urinishni qayd qilish, kerak bo'lsa bloklash."""
+    ip = _client_ip(request)
+    attempts_key = f"login_attempts:{ip}"
+    attempts = cache.get(attempts_key, 0) + 1
+    cache.set(attempts_key, attempts, getattr(settings, 'LOGIN_RATE_LIMIT_WINDOW', 900))
+    if attempts >= getattr(settings, 'LOGIN_RATE_LIMIT_ATTEMPTS', 5):
+        lockout = getattr(settings, 'LOGIN_RATE_LIMIT_LOCKOUT', 1800)
+        unlock_ts = timezone.now().timestamp() + lockout
+        cache.set(f"login_lockout:{ip}", unlock_ts, lockout)
+        cache.delete(attempts_key)
+        return True
+    return False
+
+
+def _login_clear(request):
+    ip = _client_ip(request)
+    cache.delete(f"login_attempts:{ip}")
+    cache.delete(f"login_lockout:{ip}")
 
 def get_user_role(u):
     if not u.is_authenticated: return None
@@ -64,20 +111,42 @@ def index(request):
     })
 
 def login_view(request):
-    if request.user.is_authenticated: return redirect('core:index')
-    if request.method=='POST':
-        form=LoginForm(request,data=request.POST)
+    if request.user.is_authenticated:
+        return redirect('core:index')
+
+    # Brute-force tekshiruvi
+    allowed, lockout_remaining = _login_rate_check(request)
+    if not allowed:
+        mins = (lockout_remaining + 59) // 60
+        messages.error(request, f"Juda ko'p urinish! {mins} daqiqadan keyin qayta urinib ko'ring.")
+        return render(request, 'auth/login.html', {'form': LoginForm(), 'locked': True})
+
+    if request.method == 'POST':
+        form = LoginForm(request, data=request.POST)
         if form.is_valid():
-            login(request,form.get_user()); messages.success(request,"Kirdingiz!")
+            _login_clear(request)
+            login(request, form.get_user())
+            messages.success(request, "Kirdingiz!")
             next_url = request.GET.get('next')
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
                 return redirect(next_url)
             return redirect('core:index')
-        else: messages.error(request,"Login yoki parol noto'g'ri!")
-    else: form=LoginForm()
-    return render(request,'auth/login.html',{'form':form})
+        else:
+            now_locked = _login_record_failure(request)
+            if now_locked:
+                messages.error(request, "Juda ko'p muvaffaqiyatsiz urinish! 30 daqiqaga bloklandingiz.")
+            else:
+                messages.error(request, "Login yoki parol noto'g'ri!")
+    else:
+        form = LoginForm()
+    return render(request, 'auth/login.html', {'form': form})
 
-def logout_view(request): logout(request); messages.success(request,"Chiqdingiz."); return redirect('core:index')
+
+@require_POST
+def logout_view(request):
+    logout(request)
+    messages.success(request, "Chiqdingiz.")
+    return redirect('core:index')
 def news_list(request): return render(request,'news/list.html',{'news':Paginator(News.objects.all(),20).get_page(request.GET.get('page'))})
 def news_detail(request,pk): a=get_object_or_404(News,pk=pk); return render(request,'news/detail.html',{'article':a,'photos':a.photos.all()})
 
@@ -735,20 +804,32 @@ def admin_coaches(request):
     return render(request,'admin_panel/coach_list.html',{'coaches':items})
 @superuser_or_radmin
 def admin_coach_create(request):
-    role=get_user_role(request.user);region=get_user_region(request.user)
-    if request.method=='POST':
-        form=CoachCreateForm(request.POST,request.FILES,region=region if role=='region_admin' else None)
+    role = get_user_role(request.user); region = get_user_region(request.user)
+    if request.method == 'POST':
+        form = CoachCreateForm(request.POST, request.FILES, region=region if role == 'region_admin' else None)
         if form.is_valid():
-            un=form.cleaned_data['username']
-            if User.objects.filter(username=un).exists():messages.error(request,f"'{un}' mavjud!")
+            un = form.cleaned_data['username']
+            pw = form.cleaned_data['password']
+            if User.objects.filter(username=un).exists():
+                messages.error(request, f"'{un}' login allaqachon band!")
             else:
-                u=User.objects.create_user(username=un,password=form.cleaned_data['password'])
-                coach=Coach.objects.create(user=u,first_name=form.cleaned_data['first_name'],last_name=form.cleaned_data['last_name'],fathers_name=form.cleaned_data.get('fathers_name',''),photo=form.cleaned_data.get('photo'))
-                team=form.cleaned_data.get('team')
-                if team:team.coach=coach;team.save()
-                messages.success(request,f"Yaratildi! Login:{un}");return redirect('core:admin_coaches')
-    else:form=CoachCreateForm(region=region if role=='region_admin' else None)
-    return render(request,'admin_panel/coach_form.html',{'form':form,'title':"Murabbiy yaratish"})
+                # Parol kuchini tekshirish
+                try:
+                    validate_password(pw)
+                except ValidationError as e:
+                    for msg in e.messages:
+                        messages.error(request, msg)
+                    return render(request, 'admin_panel/coach_form.html', {'form': form, 'title': "Murabbiy yaratish"})
+                u = User.objects.create_user(username=un, password=pw)
+                coach = Coach.objects.create(user=u, first_name=form.cleaned_data['first_name'], last_name=form.cleaned_data['last_name'], fathers_name=form.cleaned_data.get('fathers_name', ''), photo=form.cleaned_data.get('photo'))
+                team = form.cleaned_data.get('team')
+                if team:
+                    team.coach = coach; team.save()
+                messages.success(request, f"Yaratildi! Login: {un}")
+                return redirect('core:admin_coaches')
+    else:
+        form = CoachCreateForm(region=region if role == 'region_admin' else None)
+    return render(request, 'admin_panel/coach_form.html', {'form': form, 'title': "Murabbiy yaratish"})
 @superuser_or_radmin
 def admin_coach_delete(request,pk):
     c=get_object_or_404(Coach,pk=pk)
@@ -763,15 +844,29 @@ def admin_region_admins(request):
     return render(request,'admin_panel/region_admin_list.html',{'region_admins':RegionAdmin.objects.select_related('user','region').all()})
 @superuser_required
 def admin_region_admin_create(request):
-    if request.method=='POST':
-        form=RegionAdminForm(request.POST);un,pw=request.POST.get('username',''),request.POST.get('password','')
+    if request.method == 'POST':
+        form = RegionAdminForm(request.POST)
+        un = (request.POST.get('username') or '').strip()
+        pw = request.POST.get('password') or ''
         if form.is_valid():
-            if User.objects.filter(username=un).exists():messages.error(request,f"'{un}' mavjud!")
+            if not un or not pw:
+                messages.error(request, "Login va parol bo'sh bo'lmasligi kerak.")
+            elif User.objects.filter(username=un).exists():
+                messages.error(request, f"'{un}' login allaqachon band!")
             else:
-                u=User.objects.create_user(username=un,password=pw);ra=form.save(commit=False);ra.user=u;ra.save()
-                messages.success(request,f"Yaratildi! Login:{un}");return redirect('core:admin_region_admins')
-    else:form=RegionAdminForm()
-    return render(request,'admin_panel/region_admin_form.html',{'form':form,'title':"Viloyat admini tayinlash"})
+                try:
+                    validate_password(pw)
+                except ValidationError as e:
+                    for msg in e.messages:
+                        messages.error(request, msg)
+                    return render(request, 'admin_panel/region_admin_form.html', {'form': form, 'title': "Viloyat admini tayinlash"})
+                u = User.objects.create_user(username=un, password=pw)
+                ra = form.save(commit=False); ra.user = u; ra.save()
+                messages.success(request, f"Yaratildi! Login: {un}")
+                return redirect('core:admin_region_admins')
+    else:
+        form = RegionAdminForm()
+    return render(request, 'admin_panel/region_admin_form.html', {'form': form, 'title': "Viloyat admini tayinlash"})
 @superuser_required
 def admin_region_admin_delete(request,pk):
     ra=get_object_or_404(RegionAdmin,pk=pk)

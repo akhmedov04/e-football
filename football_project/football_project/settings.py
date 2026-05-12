@@ -60,7 +60,10 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
+    },
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
@@ -82,3 +85,48 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/auth/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# === XAVFSIZLIK ===
+
+# Fayl yuklash chegaralari (suiiste'moldan himoya)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB form ma'lumotlari uchun
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024    # 5 MB bir fayl uchun (xotirada)
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000              # POST form maydonlari soni
+
+# HTTP xavfsizlik sarlavhalari (hamma muhitda)
+SECURE_CONTENT_TYPE_NOSNIFF = True               # MIME sniffing'ni bloklash
+SECURE_REFERRER_POLICY = 'same-origin'           # Referer'ni faqat o'z domen'da yuborish
+X_FRAME_OPTIONS = 'DENY'                          # iframe'ga joylashni butunlay taqiqlash (clickjacking)
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
+# Cookie xavfsizligi
+SESSION_COOKIE_HTTPONLY = True                    # JS orqali cookie'ga kirish taqiq
+SESSION_COOKIE_SAMESITE = 'Lax'                   # CSRF himoyasini kuchaytirish
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Session
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7             # 1 hafta (default 2 hafta — qisqartiramiz)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# Brute-force himoyasi uchun cache (LocMem default)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'e-futbol-cache',
+    }
+}
+
+# Login chegaralari (brute-force himoyasi)
+LOGIN_RATE_LIMIT_ATTEMPTS = 5                     # 5 ta urinishdan keyin
+LOGIN_RATE_LIMIT_WINDOW = 15 * 60                 # 15 daqiqa ichida
+LOGIN_RATE_LIMIT_LOCKOUT = 30 * 60                # 30 daqiqa bloklash
+
+# Production rejimida (DEBUG=False) faqat HTTPS uchun
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True                    # HTTP → HTTPS yo'naltirish
+    SESSION_COOKIE_SECURE = True                  # Cookie faqat HTTPS orqali
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000                # 1 yil (HSTS)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

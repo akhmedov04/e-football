@@ -7,6 +7,34 @@ from .models import (
 )
 
 
+# Fayl validatorlari
+MAX_IMAGE_MB = 5
+ALLOWED_IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+
+
+def validate_image_file(file):
+    """Rasm hajmi va format'ini tekshirish."""
+    if not file:
+        return file
+    if file.size > MAX_IMAGE_MB * 1024 * 1024:
+        raise forms.ValidationError(f"Rasm hajmi {MAX_IMAGE_MB} MB dan oshmasligi kerak.")
+    name = (getattr(file, 'name', '') or '').lower()
+    ext = '.' + name.rsplit('.', 1)[-1] if '.' in name else ''
+    if ext and ext not in ALLOWED_IMAGE_EXTS:
+        raise forms.ValidationError(f"Faqat {', '.join(sorted(ALLOWED_IMAGE_EXTS))} formatlarga ruxsat berilgan.")
+    return file
+
+
+class _ImageMixin:
+    """ModelForm'lar uchun rasm fayl validatsiyasi."""
+    PHOTO_FIELDS = ('photo', 'logo')
+
+    def _validate_photos(self):
+        for fname in self.PHOTO_FIELDS:
+            if fname in self.cleaned_data:
+                validate_image_file(self.cleaned_data.get(fname))
+
+
 class LoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Foydalanuvchi nomi'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-input', 'placeholder': 'Parol'}))
@@ -35,6 +63,9 @@ class TeamForm(forms.ModelForm):
             'category': forms.Select(attrs={'class': 'form-select'}),
         }
 
+    def clean_logo(self):
+        return validate_image_file(self.cleaned_data.get('logo'))
+
 
 class PlayerForm(forms.ModelForm):
     class Meta:
@@ -58,6 +89,9 @@ class PlayerForm(forms.ModelForm):
         if self.instance and self.instance.pk and self.instance.birthday:
             self.initial['birthday'] = self.instance.birthday.strftime('%Y-%m-%d')
 
+    def clean_photo(self):
+        return validate_image_file(self.cleaned_data.get('photo'))
+
 
 class PlayerRequestForm(forms.ModelForm):
     """Coach o'yinchi so'rovi uchun form — team avtomatik coach jamoasidan olinadi."""
@@ -75,6 +109,9 @@ class PlayerRequestForm(forms.ModelForm):
             'jersey_number': forms.NumberInput(attrs={'class': 'form-input'}),
             'position': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def clean_photo(self):
+        return validate_image_file(self.cleaned_data.get('photo'))
 
 
 class PlayerRequestEditForm(forms.ModelForm):
@@ -101,6 +138,9 @@ class PlayerRequestEditForm(forms.ModelForm):
         # Date field formatni to'g'ri ko'rsatish uchun
         if self.instance and self.instance.birthday:
             self.initial['birthday'] = self.instance.birthday.strftime('%Y-%m-%d')
+
+    def clean_photo(self):
+        return validate_image_file(self.cleaned_data.get('photo'))
 
 
 class CompetitionForm(forms.ModelForm):
@@ -217,3 +257,6 @@ class CoachCreateForm(forms.Form):
         super().__init__(*args, **kwargs)
         if region:
             self.fields['team'].queryset = Team.objects.filter(city__region=region)
+
+    def clean_photo(self):
+        return validate_image_file(self.cleaned_data.get('photo'))
