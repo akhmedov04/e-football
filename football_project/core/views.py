@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Count, Sum, F, Case, When, IntegerField
 from datetime import timedelta
 from functools import wraps
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -101,7 +101,98 @@ def competition_detail(request,pk):
     matches=comp.matches.select_related('team_home','team_away').filter(is_bye=False) if comp.type=='round_robin' else comp.matches.select_related('team_home','team_away').all()
     return render(request,'competitions/detail.html',{'comp':comp,'matches':matches,'standings':comp.get_standings() if comp.type=='round_robin' else None,'olympic_rounds':comp.get_olympic_rounds() if comp.type=='olympic' else None})
 
-def statistics(request): return render(request,'core/statistics.html')
+def statistics(request):
+    # Umumiy hisoblar
+    totals = {
+        'teams': Team.objects.count(),
+        'players': Player.objects.count(),
+        'coaches': Coach.objects.count(),
+        'competitions': Competition.objects.count(),
+        'finished_competitions': Competition.objects.filter(is_finished=True).count(),
+        'matches': Match.objects.filter(is_bye=False).count(),
+        'finished_matches': Match.objects.filter(is_finished=True, is_bye=False).count(),
+        'regions': Region.objects.count(),
+        'cities': City.objects.count(),
+        'stadiums': Stadium.objects.count(),
+        'news': News.objects.count(),
+    }
+
+    # Pozitsiyalar bo'yicha o'yinchilar
+    pos_counts = dict(Player.objects.values_list('position').annotate(c=Count('id')).values_list('position', 'c'))
+    pos_total = sum(pos_counts.values()) or 1
+    position_stats = []
+    for code, label in Player.POSITION_CHOICES:
+        cnt = pos_counts.get(code, 0)
+        position_stats.append({
+            'code': code,
+            'label': label,
+            'count': cnt,
+            'percent': round(cnt * 100 / pos_total, 1) if pos_total else 0,
+        })
+
+    # Top jamoalar — kiritilgan gol soni bo'yicha
+    team_goals = {}
+    team_wins = {}
+    for m in Match.objects.filter(is_finished=True, is_bye=False).select_related('team_home', 'team_away'):
+        sh, sa = m.score_home or 0, m.score_away or 0
+        team_goals[m.team_home_id] = team_goals.get(m.team_home_id, [m.team_home, 0])
+        team_goals[m.team_away_id] = team_goals.get(m.team_away_id, [m.team_away, 0])
+        team_goals[m.team_home_id][1] += sh
+        team_goals[m.team_away_id][1] += sa
+        # G'oliblar
+        winner = m.get_winner()
+        if winner:
+            team_wins[winner.id] = team_wins.get(winner.id, [winner, 0])
+            team_wins[winner.id][1] += 1
+
+    top_scoring_teams = sorted(
+        [{'team': v[0], 'goals': v[1]} for v in team_goals.values() if v[1] > 0],
+        key=lambda x: x['goals'], reverse=True
+    )[:5]
+
+    top_winning_teams = sorted(
+        [{'team': v[0], 'wins': v[1]} for v in team_wins.values()],
+        key=lambda x: x['wins'], reverse=True
+    )[:5]
+
+    # Viloyat bo'yicha jamoalar (top 5)
+    by_region = list(
+        Region.objects.annotate(team_count=Count('cities__teams'))
+        .filter(team_count__gt=0)
+        .order_by('-team_count', 'name')[:5]
+        .values('name', 'team_count')
+    )
+    max_region_count = max((r['team_count'] for r in by_region), default=1) or 1
+    for r in by_region:
+        r['percent'] = round(r['team_count'] * 100 / max_region_count, 1)
+
+    # Kategoriya bo'yicha jamoalar
+    by_category = list(
+        Category.objects.annotate(team_count=Count('teams'))
+        .filter(team_count__gt=0)
+        .order_by('-team_count', 'name')
+        .values('name', 'team_count')
+    )
+
+    # So'nggi yakunlangan musobaqalar
+    recent_finished = Competition.objects.filter(is_finished=True).select_related('category', 'stadium').order_by('-date')[:5]
+
+    # Umumiy gollar
+    total_goals = sum(v[1] for v in team_goals.values())
+    avg_goals_per_match = round(total_goals / totals['finished_matches'], 2) if totals['finished_matches'] else 0
+
+    ctx = {
+        'totals': totals,
+        'position_stats': position_stats,
+        'top_scoring_teams': top_scoring_teams,
+        'top_winning_teams': top_winning_teams,
+        'by_region': by_region,
+        'by_category': by_category,
+        'recent_finished': recent_finished,
+        'total_goals': total_goals,
+        'avg_goals_per_match': avg_goals_per_match,
+    }
+    return render(request, 'core/statistics.html', ctx)
 def contact(request): return render(request,'core/contact.html')
 
 def search_player(request):
