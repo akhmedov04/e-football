@@ -14,35 +14,43 @@
 .cl-toolbar .reset:hover{color:var(--green-700)}
 .cl-count{font-size:.8rem;color:var(--gray-500);font-weight:600}
 
-.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1rem}
-.comp-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:1.25rem;transition:var(--transition);position:relative;overflow:hidden}
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:1.1rem}
+.comp-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:1.25rem 1.35rem;transition:var(--transition);display:flex;flex-direction:column;gap:.85rem;min-width:0}
 .comp-card:hover{box-shadow:var(--shadow-md);border-color:var(--green-300);transform:translateY(-1px)}
-.comp-card .head{display:flex;justify-content:space-between;align-items:start;gap:.5rem;margin-bottom:.7rem}
-.comp-card h3{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:800;color:var(--gray-900);line-height:1.25}
-.comp-card .meta{font-size:.78rem;color:var(--gray-500);margin-top:.2rem;display:flex;gap:.5rem;flex-wrap:wrap}
-.comp-card .meta .em{opacity:.7;font-size:.85rem}
-.comp-card .status-pill{flex-shrink:0;font-size:.7rem;font-weight:800;padding:.25rem .55rem;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.comp-card .head{display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem}
+.comp-card .head .title-wrap{flex:1;min-width:0}
+.comp-card h3{font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:800;color:var(--gray-900);line-height:1.3;word-break:break-word}
+.comp-card .meta{font-size:.8rem;color:var(--gray-500);margin-top:.45rem;display:flex;gap:.45rem .85rem;flex-wrap:wrap}
+.comp-card .meta span{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
+.comp-card .meta .em{opacity:.75;font-size:.85rem}
+.comp-card .status-pill{flex-shrink:0;font-size:.65rem;font-weight:800;padding:.25rem .6rem;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;align-self:flex-start}
 .status-pending{background:#fef3c7;color:#92400e}
 .status-active{background:#dcfce7;color:#15803d}
 .status-finished{background:#f3f4f6;color:#4b5563}
 
-.comp-progress{margin:.75rem 0 1rem}
+.comp-progress{display:flex;flex-direction:column;gap:.35rem}
 .comp-progress-bar{height:7px;background:var(--gray-100);border-radius:999px;overflow:hidden}
 .comp-progress-bar .fill{height:100%;background:linear-gradient(90deg,var(--green-500),var(--green-400));border-radius:999px;transition:width .4s ease}
 .comp-progress-bar.full .fill{background:linear-gradient(90deg,#94a3b8,#cbd5e1)}
-.comp-progress-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;font-size:.75rem;color:var(--gray-500);font-weight:700}
+.comp-progress-info{display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:var(--gray-500);font-weight:700}
 .comp-progress-info .pct{color:var(--green-700);font-family:'Space Grotesk',sans-serif;font-size:.85rem}
 
-.comp-card .actions{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;padding-top:.85rem;border-top:1px solid var(--gray-100)}
-.comp-card .actions form{display:inline}
-.btn-icon{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;color:var(--gray-700);transition:var(--transition);text-decoration:none;flex-shrink:0}
+.comp-card .actions{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;padding-top:.85rem;border-top:1px solid var(--gray-100);margin-top:auto}
+.comp-card .actions form{display:inline-flex;margin:0}
+.comp-card .actions .spacer{flex:1}
+.btn-icon{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;color:var(--gray-700);transition:var(--transition);text-decoration:none;flex-shrink:0;padding:0}
 .btn-icon:hover{border-color:var(--green-400);color:var(--green-700);background:var(--green-50)}
 .btn-icon.danger:hover{border-color:#fca5a5;color:#dc2626;background:#fef2f2}
 .btn-icon.warn:hover{border-color:#fcd34d;color:#d97706;background:#fffbeb}
-.btn-primary-soft{padding:.4rem .85rem;border-radius:8px;background:var(--green-600);color:#fff;font-size:.78rem;font-weight:700;border:0;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;font-family:'Nunito',sans-serif}
+.btn-primary-soft{padding:.5rem .95rem;border-radius:8px;background:var(--green-600);color:#fff;font-size:.8rem;font-weight:700;border:0;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem;font-family:'Nunito',sans-serif;white-space:nowrap;height:34px;line-height:1}
 .btn-primary-soft:hover{background:var(--green-700)}
-.btn-secondary-soft{padding:.4rem .85rem;border-radius:8px;background:var(--gray-100);color:var(--gray-700);font-size:.78rem;font-weight:700;border:0;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;font-family:'Nunito',sans-serif}
+.btn-secondary-soft{padding:.5rem .95rem;border-radius:8px;background:var(--gray-100);color:var(--gray-700);font-size:.8rem;font-weight:700;border:0;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem;font-family:'Nunito',sans-serif;white-space:nowrap;height:34px;line-height:1}
 .btn-secondary-soft:hover{background:var(--gray-200)}
+
+@media(max-width:520px){
+    .comp-grid{grid-template-columns:1fr}
+    .comp-card{padding:1rem}
+}
 
 .cl-empty{background:#fff;border:1px dashed var(--gray-300);border-radius:var(--radius-lg);padding:3rem 2rem;text-align:center;color:var(--gray-400)}
 .cl-empty .em{font-size:2.5rem;display:block;margin-bottom:.5rem;opacity:.6}
@@ -85,16 +93,14 @@
     {% with c=it.comp %}
     <div class="comp-card">
         <div class="head">
-            <div style="flex:1;min-width:0">
+            <div class="title-wrap">
                 <h3>{{ c.name }}</h3>
                 <div class="meta">
                     <span><span class="em">&#128197;</span> {{ c.date }}</span>
                     <span><span class="em">&#127942;</span> {{ c.get_type_display }}</span>
                     <span><span class="em">&#128218;</span> {{ c.category.name }}</span>
-                </div>
-                <div class="meta" style="margin-top:.3rem">
                     {% if c.stadium %}<span><span class="em">&#127963;</span> {{ c.stadium.name }}</span>{% endif %}
-                    <span><span class="em">&#9917;</span> {{ c.teams.count }} ta jamoa</span>
+                    <span><span class="em">&#9917;</span> {{ c.teams.count }} jamoa</span>
                 </div>
             </div>
             {% if c.is_finished %}
@@ -139,7 +145,8 @@
             {% if not c.is_finished %}
                 <a href="{% url 'core:admin_competition_edit' c.pk %}" class="btn-icon" title="Tahrirlash">&#9881;</a>
             {% endif %}
-            <form method="post" action="{% url 'core:admin_competition_delete' c.pk %}" style="margin-left:auto">{% csrf_token %}
+            <span class="spacer"></span>
+            <form method="post" action="{% url 'core:admin_competition_delete' c.pk %}">{% csrf_token %}
                 <button class="btn-icon danger" title="O'chirish" onclick="return confirm('Musobaqa o\'chirilsinmi? Bu amalni qaytarib bo\'lmaydi!')">&#128465;</button>
             </form>
         </div>
